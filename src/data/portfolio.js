@@ -1,0 +1,621 @@
+import photo from '../assets/photo.jpg';
+import resume from '../assets/resume.pdf';
+
+export const portfolioData = {
+  personal: {
+    name: 'Soumik Chaudhuri',
+    displayName: 'Soumik Chaudhuri',
+    title: 'Flutter × AI/ML Developer',
+    subtitle: 'Full Stack Developer',
+    tagline: 'I build the app and the brain inside it.',
+    shortBio:
+      'A B.Tech CSE (AIML) student and software engineer who builds production-grade Flutter applications, full-stack systems, and AI-powered tools that solve real problems.',
+    bio:
+      'I am Soumik Chaudhuri, a B.Tech Computer Science (AIML) student at University of Engineering and Management Jaipur, specializing in Flutter mobile development, full-stack engineering, and AI/ML integration. I have hands-on professional experience as a Flutter Developer Intern and Team Leader at Blue Planet Infosolutions Pvt. Ltd., where I led a team of 14 developers and contributed to production applications serving 1000+ users. I build end-to-end systems from cross-platform mobile apps and real-time backends to intelligent desktop assistants and AI-powered note management tools.',
+    heroDescription:
+      'I design and develop cross-platform mobile applications, real-time backend systems, and AI-powered tools. From idea to deployment, I build it all.',
+    college: 'University of Engineering and Management Jaipur',
+    degree: 'B.Tech CSE (AIML)',
+    year: 'Final Year — 2027 Expected',
+    status: 'B.Tech CSE (AIML) Student — Final Year (2027 Expected)',
+    location: 'Jaipur, Rajasthan, India',
+    permanentLocation: 'Durgapur, West Bengal, India',
+    availability: 'Open to Full-Time Opportunities — Available Immediately',
+    email: 'soumikchaudhuri002@gmail.com',
+    phone: '+91 9475858070',
+    github: 'https://github.com/soumik3312',
+    linkedin: 'https://www.linkedin.com/in/soumik-chaudhuri-0bb4b72a8',
+    twitter: 'https://x.com/Soumik_Code',
+    instagram: 'https://www.instagram.com/__._.soumik._.__/',
+  },
+
+  about: {
+    paragraphs: [
+      'I am a final-year B.Tech Computer Science (AIML) student at University of Engineering and Management Jaipur with a CGPA of 8.3. I specialize in Flutter mobile development, full-stack engineering with Node.js and MongoDB, and AI/ML integration using Python and transformer-based models.',
+      'I have professional experience as a Flutter Developer Intern and promoted Team Leader at Blue Planet Infosolutions Pvt. Ltd., Pune, where I led a 14-member development team, contributed to production Flutter applications serving 1000+ users, and delivered projects within deadlines following agile practices.',
+      'Beyond my internship, I have independently built CraftHub, J.A.R.V.I.S, NoteGenius AI, SportsTix, a Telemedicine app, and Wave Music App: each shaped around performance, scalability, and user experience.',
+    ],
+    difference:
+      'I do not just build UIs. I engineer complete systems, integrate AI into mobile apps, build real-time backends, and ship products that real users interact with.',
+    currentFocus: 'Full-stack Flutter development, AI/ML integration, and actively applying for software engineering roles.',
+    currentlyLearning: 'Advanced state management in Flutter, LLM API integrations, and system design principles.',
+    currentlyBuilding: 'CraftHub v2 improvements and NoteGenius AI multilingual backend enhancements.',
+    careerGoal:
+      'To become a full-stack mobile and AI engineer at a product-focused company, building scalable intelligent applications that impact millions of users.',
+    funFact:
+      'I built a real Iron Man-style AI desktop assistant from scratch: offline, voice-activated, and capable of controlling my phone from my PC.',
+    cyclingBuilds: ['AI-powered Flutter apps', 'real-time systems', 'my first product'],
+  },
+
+  stats: {
+    panel: [
+      { value: '6+', label: 'Projects Built' },
+      { value: '2', label: 'AI Projects' },
+      { value: '4', label: 'Hackathons' },
+      { value: '1', label: 'Internship' },
+    ],
+    projects: {
+      total: '6',
+      flutter: '5',
+      ai: '2',
+      fullStack: '1',
+      integrated: '1',
+      yearsCoding: '3+',
+      certifications: '6',
+    },
+  },
+
+  skills: {
+    mobile: [
+      'Flutter',
+      'Dart',
+      'Provider',
+      'Riverpod',
+      'Cross-Platform Development',
+      'Flutter Animations',
+      'Custom UI Components',
+      'Flutter Local Notifications',
+      'Image Picker / File Picker',
+      'Cached Network Image',
+    ],
+    aiml: [
+      'Python',
+      'PyTorch',
+      'Hugging Face Transformers',
+      'Gemini API',
+      'BART / T5 / Pegasus',
+      'Tesseract OCR / EasyOCR',
+      'LangDetect',
+      'NLLB-200 / MarianMT',
+      'NLP Pipeline Engineering',
+      'Speech Recognition & TTS',
+    ],
+    fullstack: [
+      'Node.js',
+      'Express.js',
+      'REST API Development',
+      'Socket.IO',
+      'JWT Authentication',
+      'Electron.js',
+      'WebSockets',
+      'Multer',
+      'Cloudinary',
+      'Brevo / EmailJS / Nodemailer',
+    ],
+    databases: ['MongoDB', 'Firebase Firestore', 'Hive', 'Shared Preferences'],
+    languages: ['Dart', 'Python', 'JavaScript', 'Java', 'HTML', 'CSS', 'TypeScript', 'C/C++'],
+    tools: ['Git', 'GitHub', 'VS Code', 'Android Studio', 'Postman', 'Firebase Console', 'Cloudinary', 'EmailJS', 'Brevo', 'GitHub OAuth'],
+  },
+
+  projects: [
+    {
+      name: 'CraftHub',
+      category: 'Integrated',
+      description:
+        'A full-stack real-time mobile collaboration platform enabling developers, creators, and innovators to discover teammates, communicate instantly, manage projects, and contribute code from a single application.',
+      problem:
+        'Developers and creators rely on multiple disconnected platforms for networking, code, communication, and project management, creating friction between finding the right people and actually building together.',
+      solution:
+        'CraftHub unifies teammate discovery, real-time communication, project publishing, AI-powered matchmaking, GitHub integration, and an in-app coding workspace in a Flutter mobile app backed by Node.js and MongoDB.',
+      tech: ['Flutter', 'Dart', 'Node.js', 'Express.js', 'MongoDB', 'Socket.IO', 'Gemini API', 'GitHub OAuth'],
+      github: 'https://github.com/soumik3312/CraftHub',
+      live: '',
+      featured: true,
+      role: 'Solo Developer (Full Stack)',
+      duration: 'March 2026 – May 2026',
+      metrics: null,
+      results: ['50+ concurrent users', '5+ REST API endpoints', 'AI-powered developer matchmaking'],
+    },
+    {
+      name: 'SportsTix',
+      category: 'Flutter',
+      description:
+        'Cross-platform Flutter sports ticket booking app with Firebase backend, 3D stadium visualizations, Cricbuzz live data, AI chatbot support, mini-games, and email confirmations.',
+      problem:
+        'Sports fans lacked a unified, visually immersive platform to browse, book, and manage tickets for both indoor and outdoor sports events across multiple stadiums in India.',
+      solution:
+        'Built a Flutter ticketing product with live match data, 3D stadium exploration, AI support, rewards, and instant booking emails.',
+      tech: ['Flutter', 'Dart', 'Firebase', 'Cricbuzz API', 'EmailJS', 'Provider', 'Firebase Cloud Storage'],
+      github: 'https://github.com/soumik3312/Sportstix',
+      live: '',
+      featured: false,
+      role: 'Solo Developer',
+      duration: 'March 2025 – May 2025',
+      metrics: null,
+      results: ['Android and iOS support', 'Email confirmation pipeline', 'Real-time sports data integration'],
+    },
+    {
+      name: 'J.A.R.V.I.S',
+      category: 'AI/ML',
+      description:
+        'Offline-first desktop AI assistant with wake-word activation, voice and text command interfaces, OS automation, USB smartphone control, and an Electron HUD.',
+      problem:
+        'Existing AI assistants are cloud-dependent, slow, and lack deep OS-level control or smartphone integration.',
+      solution:
+        'Built an offline assistant with Python, Electron.js, WebSockets, wake-word detection, phone bridge commands, and a state-driven HUD.',
+      tech: ['Python 3.12', 'Electron.js', 'JavaScript', 'WebSockets', 'speech_recognition', 'pyttsx3'],
+      github: 'https://github.com/soumik3312/Jarvis---Personal-Desktop-AI-Assistant',
+      live: '',
+      featured: false,
+      role: 'Solo Developer',
+      duration: 'December 2025 – February 2026',
+      metrics: { accuracy: '90%+', precision: 'N/A', dataset: 'N/A' },
+      results: ['90%+ wake-word detection', '8+ automation features', 'Sub-second response latency'],
+    },
+    {
+      name: 'NoteGenius AI',
+      category: 'AI/ML',
+      description:
+        'Multilingual Flutter note intelligence app powered by Python AI services for OCR, summarization, translation, document analysis, and smart organization.',
+      problem:
+        'Students, researchers, and professionals face information overload from lectures, meetings, documents, and handwritten notes across multiple languages.',
+      solution:
+        'Built a Flutter app with Python AI pipelines that scan, import, organize, translate, and summarize notes from multiple sources.',
+      tech: ['Flutter', 'Dart', 'Python', 'PyTorch', 'Hugging Face', 'Tesseract OCR', 'EasyOCR', 'NLLB-200'],
+      github: 'https://github.com/soumik3312/ai_sumarizer_app',
+      live: '',
+      featured: false,
+      role: 'Solo Developer',
+      duration: 'February 2025 – February 2026',
+      metrics: { accuracy: '95%', precision: '90%', dataset: 'Variable' },
+      results: ['9+ languages', 'TXT/PDF/DOCX/image/Markdown support', 'Three AI summary formats'],
+    },
+    {
+      name: 'Telemedicine App',
+      category: 'Flutter',
+      description:
+        'Flutter healthcare app with instant medicine delivery, 24/7 video consultations, in-person appointment scheduling, and Firebase backend services.',
+      problem:
+        'Patients in India face long waits for appointments, limited access to medicines, and fragmented remote consultation tools.',
+      solution:
+        'Developed one mobile platform combining delivery, consultations, appointments, secure user data handling, and accessible UI.',
+      tech: ['Flutter', 'Dart', 'Firebase', 'Firestore', 'Provider', 'Video Consultation API'],
+      github: 'https://github.com/soumik3312/telemedicineapp',
+      live: '',
+      featured: false,
+      role: 'Solo Developer',
+      duration: 'January 2025 – March 2025',
+      metrics: null,
+      results: ['Android and iOS operation', 'Three healthcare modules unified'],
+    },
+    {
+      name: 'Wave Music App',
+      category: 'Flutter',
+      description:
+        'Sleek ad-free Flutter music app with high-quality playback, dynamic audio filtering, synchronized lyrics, playlist libraries, and artist discovery features.',
+      problem:
+        'Music apps are often ad-heavy, slow, and missing dynamic filtering or synced lyrics.',
+      solution:
+        'Built a clean Flutter music streaming interface with playback, lyrics sync, playlists, and artist promotion.',
+      tech: ['Flutter', 'Dart', 'Firebase', 'Music Streaming APIs', 'Provider / BLoC', 'Audio Players'],
+      github: 'https://github.com/soumik3312/waveApp',
+      live: '',
+      featured: false,
+      role: 'Solo Developer',
+      duration: 'November 2024 – January 2025',
+      metrics: null,
+      results: ['Functional Flutter music app', 'Lyrics synchronization', 'Cross-platform performance'],
+    },
+  ],
+
+  timeline: [
+    {
+      year: '2019',
+      title: 'All India Radio Recognition',
+      description: 'Recognized and associated with All India Radio for extracurricular participation and communication activities.',
+      tags: ['Communication', 'Recognition'],
+      icon: 'trophy',
+    },
+    {
+      year: '2021',
+      title: 'Class X — 92% (CBSE)',
+      description: 'Completed secondary school examination at Hem Sheela Model School, Durgapur with 92% aggregate.',
+      tags: ['CBSE', 'Academics'],
+      icon: 'graduation',
+    },
+    {
+      year: '2023',
+      title: 'Class XII — 89.4% (CBSE) & Started B.Tech',
+      description: 'Completed senior secondary examination at Zoom International School and enrolled in B.Tech CSE (AIML) at University of Engineering and Management Jaipur.',
+      tags: ['AIML', 'UEM Jaipur'],
+      icon: 'graduation',
+    },
+    {
+      year: '2023',
+      title: 'Cambridge SupTech Hackathon',
+      description: 'Participated in Cambridge SupTech Hackathon 2023, collaborating on innovative software solutions under competitive time constraints.',
+      tags: ['Hackathon', 'FinTech'],
+      icon: 'code',
+    },
+    {
+      year: '2024',
+      title: 'Hack4Bengal & AceHack 2024',
+      description: 'Participated in Hack4Bengal 2024 and AceHack 2024, building AI-focused and full-stack solutions in team environments.',
+      tags: ['Hackathon', 'AI'],
+      icon: 'code',
+    },
+    {
+      year: '2024 – 2026',
+      title: 'President — Cultural Club',
+      description: 'Elected and served as Cultural Club President for 2 years, organizing 38 large-scale events and leading a 300+ member community at UEM Jaipur.',
+      tags: ['Leadership', '300+ Members'],
+      icon: 'trophy',
+    },
+    {
+      year: '2025',
+      title: 'AceHack 2025',
+      description: 'Participated in AceHack 2025, contributing to team-based application development and real-time problem solving.',
+      tags: ['Hackathon', 'Team'],
+      icon: 'code',
+    },
+    {
+      year: 'November 2024 – January 2025',
+      title: 'Built Wave Music App',
+      description: 'Developed Wave, an ad-free Flutter music streaming application with high-quality audio, dynamic audio filtering, synchronized lyrics, and a modern UI.',
+      tags: ['Flutter', 'Music'],
+      icon: 'rocket',
+    },
+    {
+      year: 'January 2025 – March 2025',
+      title: 'Built Telemedicine App',
+      description: 'Developed a Flutter-based telemedicine application with Firebase backend offering instant medicine delivery, 24/7 video consultations, and in-person appointment scheduling.',
+      tags: ['Flutter', 'Healthcare'],
+      icon: 'rocket',
+    },
+    {
+      year: 'March 2025 – May 2025',
+      title: 'Built SportsTix',
+      description: 'Developed SportsTix, a cross-platform Flutter sports ticket booking app featuring 3D stadium visualizations, Cricbuzz API live data, in-app AI chatbot, mini-games rewards system, and instant email confirmation pipeline.',
+      tags: ['Flutter', '3D'],
+      icon: 'rocket',
+    },
+    {
+      year: 'May 2025 – December 2025',
+      title: 'Flutter Developer Intern & Team Leader — Blue Planet Infosolutions',
+      description: 'Joined Blue Planet Infosolutions Pvt. Ltd. as a Flutter Developer Intern in Pune. Promoted to Team Leader, managing 14 developers and delivering production apps serving 1000+ users.',
+      tags: ['Flutter', 'Leadership'],
+      icon: 'target',
+    },
+    {
+      year: 'December 2025 – February 2026',
+      title: 'Built J.A.R.V.I.S — Offline Desktop AI Assistant',
+      description: 'Engineered J.A.R.V.I.S, an offline AI-powered desktop assistant with 90%+ wake-word detection accuracy, OS-level automation, USB smartphone bridge with 8+ features, and an Iron Man-style HUD interface.',
+      tags: ['Python', 'Electron'],
+      icon: 'brain',
+    },
+    {
+      year: 'February 2025 – February 2026',
+      title: 'Built NoteGenius AI',
+      description: 'Engineered NoteGenius AI, an intelligent multilingual note summarizer combining Flutter, Python AI backend, Hugging Face NLP models, OCR text extraction, and three-format AI summarization in 9+ languages.',
+      tags: ['AI/ML', 'Flutter'],
+      icon: 'brain',
+    },
+    {
+      year: 'March 2026 – May 2026',
+      title: 'Built CraftHub — Flagship Project',
+      description: 'Built CraftHub from scratch: a full-stack real-time Flutter collaboration platform with AI-powered developer matchmaking, Socket.IO chat, GitHub OAuth, Monaco Editor workspace, and Node.js/MongoDB backend.',
+      tags: ['Flutter', 'AI', 'Full Stack'],
+      icon: 'rocket',
+    },
+  ],
+
+  github: {
+    username: 'soumik3312',
+    url: 'https://github.com/soumik3312',
+    stats: {
+      commits: '250+',
+      repos: '12+',
+      languages: '8+',
+      stars: '20+',
+    },
+    pinned: [
+      {
+        name: 'CraftHub',
+        description: 'Real-time Flutter collaboration platform with AI matchmaking',
+        language: 'Dart / JavaScript',
+        stars: 0,
+        forks: 0,
+        url: 'https://github.com/soumik3312/CraftHub',
+      },
+      {
+        name: 'J.A.R.V.I.S',
+        description: 'Offline desktop AI assistant with wake-word detection',
+        language: 'Python / Electron',
+        stars: 0,
+        forks: 0,
+        url: 'https://github.com/soumik3312/Jarvis---Personal-Desktop-AI-Assistant',
+      },
+      {
+        name: 'NoteGenius AI',
+        description: 'Multilingual AI summarizer with OCR and Flutter frontend',
+        language: 'Dart / Python',
+        stars: 0,
+        forks: 0,
+        url: 'https://github.com/soumik3312/ai_sumarizer_app',
+      },
+    ],
+  },
+
+  education: [
+    {
+      institution: 'University of Engineering and Management Jaipur',
+      degree: 'Bachelor of Technology (B.Tech)',
+      specialization: 'Computer Science Engineering — Artificial Intelligence & Machine Learning',
+      score: 'CGPA 8.3',
+      period: '2023 – 2027 (Expected)',
+      location: 'Jaipur, Rajasthan, India',
+    },
+    {
+      institution: 'Zoom International School',
+      degree: 'CBSE Senior School Certificate Examination (Class XII)',
+      score: '89.4%',
+      period: '2023',
+      location: 'Durgapur, West Bengal, India',
+    },
+    {
+      institution: 'Hem Sheela Model School',
+      degree: 'CBSE Secondary School Examination (Class X)',
+      score: '92%',
+      period: '2021',
+      location: 'Durgapur, West Bengal, India',
+    },
+  ],
+
+  experience: [
+    {
+      company: 'Blue Planet Infosolutions Pvt. Ltd.',
+      role: 'Flutter Developer Intern & Team Leader',
+      duration: 'May 2025 – December 2025',
+      location: 'Pune, Maharashtra, India',
+      summary:
+        'Joined as a Flutter Developer Intern contributing to production-level cross-platform mobile applications and was promoted to Team Leader within the first month.',
+      impact: ['1000+ users served', '14 developers managed', '3+ REST APIs integrated'],
+    },
+    {
+      company: 'Cultural Club — University of Engineering and Management Jaipur',
+      role: 'President',
+      duration: '2024 – 2026',
+      location: 'Jaipur, Rajasthan, India',
+      summary: 'Organized 38 large-scale cultural events and led a 300+ member student community at UEM Jaipur.',
+      impact: ['38 large-scale events', '300+ active members', '2 years leadership'],
+    },
+  ],
+
+  certifications: [
+    'Database Structures and Management with MySQL',
+    'Deep Learning for Computer Vision',
+    'Become a Software Developer',
+    'JavaScript Essential Training',
+    'CSS Essential Training',
+    'Flutter Developer Intern & Team Leader — Internship Certificate',
+  ],
+
+  contact: {
+    email: 'soumikchaudhuri002@gmail.com',
+    phone: '+91 9475858070',
+    linkedin: 'https://www.linkedin.com/in/soumik-chaudhuri-0bb4b72a8',
+    github: 'https://github.com/soumik3312',
+    twitter: 'https://x.com/Soumik_Code',
+    instagram: 'https://www.instagram.com/__._.soumik._.__/',
+    preferred: 'Email',
+    timezone: 'IST (UTC +5:30)',
+    availability: 'Currently open to full-time Software Engineer and Flutter Developer roles. Available for freelance projects and remote opportunities.',
+  },
+
+  socials: [
+    { label: 'LinkedIn', url: 'https://www.linkedin.com/in/soumik-chaudhuri-0bb4b72a8', handle: 'Soumik Chaudhuri' },
+    { label: 'GitHub', url: 'https://github.com/soumik3312', handle: 'soumik3312' },
+    { label: 'Twitter/X', url: 'https://x.com/Soumik_Code', handle: '@Soumik_Code' },
+    { label: 'Instagram', url: 'https://www.instagram.com/__._.soumik._.__/', handle: '__._.soumik._.__' },
+  ],
+
+  personality: {
+    hobbies: 'Music — plays synthesizer, guitar, drum, mouth organ, clapbox, ukulele, and harmonium.',
+    interests: ['Artificial Intelligence', 'Mobile Development', 'Productivity Tools', 'Sci-Fi Technology', 'Music'],
+    favoriteTechnologies: ['Flutter', 'Python', 'Node.js', 'Gemini API'],
+    favoriteBook: 'Rich Dad Poor Dad — Robert Kiyosaki',
+    favoriteCreator: 'Code With Harry',
+    dreamRole: 'Senior Flutter / AI Engineer at a product-focused tech company',
+    languages: ['English', 'Hindi', 'Bengali'],
+    futureGoals: 'Build AI-powered mobile products used by millions, lead engineering teams, and eventually found a tech startup.',
+  },
+
+  finalRecruiterMessage: {
+    heading: "Let's Build Something Meaningful Together",
+    message:
+      'I am a Flutter and AI/ML developer with real production experience, a strong academic record, and a portfolio of 6+ projects spanning mobile apps, full-stack systems, and intelligent AI tools. I led a 14-member development team at 20, shipped apps used by 1000+ users, and built an Iron Man-style AI assistant from scratch.',
+    availabilityBanner: 'Open to Full-Time Opportunities — Available Immediately',
+  },
+};
+
+export const portfolioAssets = {
+  photo,
+  resume,
+};
+
+export const sectionTValues = {
+  hero: 0,
+  about: 0.14,
+  skills: 0.28,
+  projects: 0.43,
+  ai: 0.57,
+  timeline: 0.71,
+  github: 0.85,
+  contact: 1,
+};
+
+export const navSections = [
+  { id: 'hero', label: 'Home' },
+  { id: 'about', label: 'About' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'ai', label: 'AI' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'github', label: 'GitHub' },
+  { id: 'contact', label: 'Contact' },
+];
+
+export const journeySections = [
+  { id: 'hero', navLabel: 'Home', label: 'Hero', title: 'Home', t: sectionTValues.hero },
+  { id: 'about', navLabel: 'About', label: 'About Me', title: 'About Me', t: sectionTValues.about },
+  { id: 'skills', navLabel: 'Skills', label: 'Skills', title: 'Skills', t: sectionTValues.skills },
+  { id: 'projects', navLabel: 'Projects', label: 'Projects', title: 'Projects', t: sectionTValues.projects },
+  { id: 'ai', navLabel: 'AI', label: 'AI / ML', title: 'AI / ML', t: sectionTValues.ai },
+  { id: 'timeline', navLabel: 'Timeline', label: 'Journey', title: 'Journey', t: sectionTValues.timeline },
+  { id: 'github', navLabel: 'GitHub', label: 'GitHub', title: 'GitHub', t: sectionTValues.github },
+  { id: 'contact', navLabel: 'Contact', label: 'Contact', title: 'Contact', t: sectionTValues.contact },
+];
+
+const projectWithLegacyFields = (project) => ({
+  ...project,
+  short: project.description,
+  demo: project.live || 'N/A - live demo unavailable',
+  features: project.tech,
+  challenges: [project.problem],
+  results: project.results || ['Built and shipped as a portfolio project'],
+  gradient: 'from-emerald-400/25 via-cyan-400/15 to-slate-900/20',
+});
+
+export const portfolio = {
+  person: {
+    fullName: portfolioData.personal.name,
+    displayName: portfolioData.personal.displayName,
+    title: portfolioData.personal.title,
+    secondaryTitle: portfolioData.personal.subtitle,
+    tagline: portfolioData.personal.tagline,
+    status: portfolioData.personal.status,
+    location: portfolioData.personal.location,
+    permanentLocation: portfolioData.personal.permanentLocation,
+    openFor: ['Full Time', 'Internship', 'Freelance', 'Remote Work'],
+    roleBadges: [portfolioData.personal.title, portfolioData.personal.subtitle],
+    shortIntro: portfolioData.personal.shortBio,
+    longIntro: portfolioData.about.paragraphs,
+    quote: portfolioData.personal.tagline,
+    funFact: portfolioData.about.funFact,
+  },
+  hero: {
+    heading: 'Building Apps. Training AI. Shipping Products.',
+    subtitle: `${portfolioData.personal.title} | ${portfolioData.personal.subtitle}`,
+    description: portfolioData.personal.heroDescription,
+    availability: portfolioData.personal.availability,
+    topTag: 'B.Tech CSE (AIML) · Open to Opportunities',
+    typingTexts: ['Building Flutter Applications...', 'Engineering AI-Powered Systems...', 'Developing Full Stack Backends...', 'Shipping Real Products...'],
+    ctas: {
+      primary: 'View Projects',
+      secondary: 'Download Resume',
+      tertiary: 'Contact Me',
+    },
+  },
+  about: {
+    title: 'About Me',
+    heading: 'More Than Just a Developer',
+    paragraphs: portfolioData.about.paragraphs,
+    difference: portfolioData.about.difference,
+    currentFocus: portfolioData.about.currentFocus,
+    learning: portfolioData.about.currentlyLearning,
+    building: portfolioData.about.currentlyBuilding,
+    careerGoal: portfolioData.about.careerGoal,
+    details: [portfolioData.personal.degree, portfolioData.personal.location, portfolioData.personal.year],
+    cyclingBuilds: portfolioData.about.cyclingBuilds,
+  },
+  stats: portfolioData.stats.panel,
+  skills: {
+    mobile: {
+      title: 'Mobile Development',
+      color: '#2d6a4f',
+      icon: 'Smartphone',
+      summary: 'Flutter apps with rich UI, animations, state management, and production integrations.',
+      items: portfolioData.skills.mobile,
+    },
+    ai: {
+      title: 'AI / ML',
+      color: '#2d6a4f',
+      icon: 'BrainCircuit',
+      summary: 'NLP, OCR, applied machine learning, LLM APIs, and practical AI products.',
+      items: portfolioData.skills.aiml,
+    },
+    fullStack: {
+      title: 'Full Stack',
+      color: '#2d6a4f',
+      icon: 'Server',
+      summary: 'Realtime APIs, databases, authentication, and developer tooling.',
+      items: portfolioData.skills.fullstack,
+    },
+    databases: portfolioData.skills.databases,
+    languages: portfolioData.skills.languages,
+    tools: portfolioData.skills.tools,
+  },
+  featuredProject: {
+    name: portfolioData.projects[0].name,
+    reason:
+      'CraftHub is the most technically comprehensive project: Flutter mobile development, Node.js backend, MongoDB, Socket.IO, Gemini AI matchmaking, GitHub OAuth, and Monaco Editor in one production-grade platform.',
+    achievement: 'Built a real-time collaboration platform supporting 50+ concurrent users with AI-powered developer matchmaking.',
+    visualTheme: 'Dark tech / developer tools aesthetic',
+    mainStatistic: '50+ concurrent users | 5+ API endpoints | AI-powered matchmaking',
+    github: portfolioData.projects[0].github,
+    liveDemo: portfolioData.projects[0].live || 'N/A - live demo unavailable',
+  },
+  projects: portfolioData.projects.map(projectWithLegacyFields),
+  aiShowcase: portfolioData.projects
+    .filter((project) => project.metrics)
+    .map((project) => ({
+      name: project.name,
+      problem: project.problem,
+      dataset: project.metrics.dataset,
+      datasetSize: project.metrics.dataset,
+      model: project.tech.join(', '),
+      accuracy: project.metrics.accuracy,
+      precision: project.metrics.precision,
+      trainingTime: 'Pre-trained models or command-routing system',
+      frameworks: project.tech,
+      features: project.tech,
+      github: project.github,
+      demo: project.live || 'N/A - demo unavailable',
+    })),
+  timeline: portfolioData.timeline.map((item) => ({ ...item, type: item.icon })),
+  github: {
+    username: portfolioData.github.username,
+    url: portfolioData.github.url,
+    stats: [
+      { label: 'Total Commits', value: portfolioData.github.stats.commits, note: '' },
+      { label: 'Public Repos', value: portfolioData.github.stats.repos, note: '' },
+      { label: 'Languages Used', value: portfolioData.github.stats.languages, note: '' },
+      { label: 'Stars Earned', value: portfolioData.github.stats.stars, note: '' },
+    ],
+    pinnedRepos: portfolioData.github.pinned.map((repo) => ({
+      ...repo,
+      stars: String(repo.stars),
+      forks: String(repo.forks),
+      url: repo.url,
+    })),
+  },
+  contact: {
+    ...portfolioData.contact,
+    availabilityBanner: portfolioData.finalRecruiterMessage.availabilityBanner,
+    finalHeading: portfolioData.finalRecruiterMessage.heading,
+    finalMessage: portfolioData.finalRecruiterMessage.message,
+  },
+  socials: portfolioData.socials,
+  personality: portfolioData.personality,
+  assets: portfolioAssets,
+};
