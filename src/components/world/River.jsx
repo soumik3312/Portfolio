@@ -4,6 +4,61 @@ import * as THREE from 'three';
 import { RiverFoam } from './Particles';
 import { createOffsetCurve, seededRandom } from './path';
 
+const RiverSparkles = React.memo(function RiverSparkles({ curve, mode }) {
+  const count = 44;
+  const isDay = mode === 'day';
+  const progress = useRef(Array.from({ length: count }, (_, index) => seededRandom(index + 1001)));
+  const tempPoint = useMemo(() => new THREE.Vector3(), []);
+  const geometry = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    for (let index = 0; index < count; index += 1) {
+      const point = curve.getPoint(seededRandom(index + 1001));
+      positions[index * 3] = point.x + (seededRandom(index + 1002) - 0.5) * 1.7;
+      positions[index * 3 + 1] = 0.18;
+      positions[index * 3 + 2] = point.z + (seededRandom(index + 1003) - 0.5) * 1.1;
+    }
+
+    const sparkleGeometry = new THREE.BufferGeometry();
+    sparkleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return sparkleGeometry;
+  }, [curve]);
+
+  const material = useMemo(
+    () =>
+      new THREE.PointsMaterial({
+        color: '#d8fff4',
+        size: 0.09,
+        transparent: true,
+        opacity: isDay ? 0.68 : 0.28,
+        depthWrite: false,
+        sizeAttenuation: true,
+      }),
+    [isDay],
+  );
+
+  useFrame((state, delta) => {
+    const position = geometry.attributes.position;
+    const time = state.clock.elapsedTime;
+
+    for (let index = 0; index < count; index += 1) {
+      progress.current[index] += delta * (0.008 + seededRandom(index + 1004) * 0.012);
+      if (progress.current[index] > 1) progress.current[index] = 0;
+      curve.getPoint(progress.current[index], tempPoint);
+      position.setXYZ(
+        index,
+        tempPoint.x + (seededRandom(index + 1002) - 0.5) * 1.7,
+        0.18 + Math.sin(time * 2.1 + index) * 0.035,
+        tempPoint.z + (seededRandom(index + 1003) - 0.5) * 1.1,
+      );
+    }
+
+    material.opacity = (isDay ? 0.58 : 0.24) + Math.sin(time * 2.4) * 0.1;
+    position.needsUpdate = true;
+  });
+
+  return <points geometry={geometry} material={material} />;
+});
+
 const River = React.memo(function River({ mode }) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const rockRef = useRef(null);
@@ -24,6 +79,8 @@ const River = React.memo(function River({ mode }) {
     () =>
       new THREE.MeshStandardMaterial({
         color: isDay ? '#2196a8' : '#0d3d4a',
+        emissive: isDay ? '#0a4350' : '#061b26',
+        emissiveIntensity: 0.05,
         roughness: 0.1,
         metalness: 0.3,
         transparent: true,
@@ -96,8 +153,11 @@ const River = React.memo(function River({ mode }) {
 
   useFrame((state) => {
     if (!waterMaterial) return;
+    const time = state.clock.elapsedTime;
     const baseOpacity = isDay ? 0.82 : 0.68;
-    waterMaterial.opacity = baseOpacity + Math.sin(state.clock.elapsedTime * 0.5) * 0.05;
+    waterMaterial.opacity = baseOpacity + Math.sin(time * 0.5) * 0.05;
+    waterMaterial.emissive.setHSL(0.55, 0.8, 0.05 + Math.sin(time * 2) * 0.02);
+    waterMaterial.color.setHSL(0.52 + Math.sin(time * 0.5) * 0.02, 0.7, isDay ? 0.45 : 0.24);
   });
 
   return (
@@ -109,6 +169,7 @@ const River = React.memo(function River({ mode }) {
       <mesh geometry={riverGeometry} material={waterMaterial} scale={[1, 0.05, 1]} position={[0, 0.04, 0]} />
       <instancedMesh ref={rockRef} args={[rockGeometry, rockMaterial, riverRocks.length]} />
       <RiverFoam curve={riverCurve} />
+      <RiverSparkles curve={riverCurve} mode={mode} />
     </group>
   );
 });

@@ -1,20 +1,48 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, ChevronDown, Download, GitFork, Github, Linkedin, Mail, Send, Star } from 'lucide-react';
+import { ArrowRight, Check, Download, GitFork, Github, Linkedin, Mail, Send, Star } from 'lucide-react';
 import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
 
 const panelHeaders = {
-  about: { label: '01 / About Me', heading: 'More Than Just a Developer' },
-  skills: { label: '02 / Skills', heading: 'What I Build With' },
-  projects: { label: '03 / Projects', heading: 'Proof That Systems Ship' },
-  ai: { label: '04 / AI & Machine Learning', heading: 'Apps That Think' },
-  timeline: { label: '05 / Journey', heading: 'The Road Here' },
-  github: { label: '06 / GitHub', heading: 'Open Source Activity' },
-  contact: { label: '07 / Contact', heading: "Let's Build Something" },
+  about: { label: '01 ◆ ABOUT ME', heading: 'More Than Just a Developer' },
+  skills: { label: '02 ◆ SKILLS', heading: 'What I Build With' },
+  projects: { label: '03 ◆ PROJECTS', heading: 'Proof That Systems Ship' },
+  ai: { label: '04 ◆ AI & MACHINE LEARNING', heading: 'Apps That Think' },
+  timeline: { label: '05 ◆ JOURNEY', heading: 'The Road Here' },
+  github: { label: '06 ◆ GITHUB', heading: 'Open Source Activity' },
+  contact: { label: '07 ◆ CONTACT', heading: "Let's Build Something" },
 };
 
 const buildingPhrases = portfolioData.about.cyclingBuilds;
+
+const glyphFixes = [
+  [/Ã—/g, '×'],
+  [/Â·/g, '·'],
+  [/â€”/g, '—'],
+  [/â€“/g, '–'],
+  [/â†’/g, '→'],
+  [/â†‘/g, '↑'],
+];
+
+const displayText = (value) => {
+  if (typeof value !== 'string') return value;
+  return glyphFixes.reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), value);
+};
+
+function DiamondDivider({ compact = false }) {
+  return (
+    <div className={`diamond-divider ${compact ? 'is-compact' : ''}`} aria-hidden="true">
+      <div className="line" />
+      <div className="diamond">◆</div>
+      <div className="line" />
+    </div>
+  );
+}
+
+function PanelDivider() {
+  return <DiamondDivider />;
+}
 
 function PanelHeader({ section }) {
   const header = panelHeaders[section];
@@ -22,42 +50,55 @@ function PanelHeader({ section }) {
   return (
     <header className="content-panel-header">
       <span>{header.label}</span>
-      <i />
+      <DiamondDivider />
       <h2>{header.heading}</h2>
+      <DiamondDivider />
     </header>
   );
 }
 
 function Tag({ children }) {
-  return <span className="panel-tag">{children}</span>;
+  return <span className="panel-tag">{displayText(children)}</span>;
+}
+
+function BoardNails({ hero = false }) {
+  const nails = hero ? ['top-right', 'bottom-right'] : ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  return nails.map((position) => <span key={position} className={`board-nail board-nail--${position}`} aria-hidden="true" />);
 }
 
 function HeroPanel() {
   const { setTargetProgress } = useCameraProgress();
   const data = portfolioData.personal;
+  const [firstName, ...lastNameParts] = data.name.split(' ');
 
   return (
     <div className="hero-panel-content">
       <figure className="hero-panel-photo">
         <img src={portfolioAssets.photo} alt={data.name} />
       </figure>
-      <span className="hero-panel-label">{data.degree} · Open to Opportunities</span>
-      <h1>{data.name}</h1>
-      <p className="hero-panel-role">{data.title}</p>
-      <p className="hero-panel-subtitle">{data.subtitle}</p>
+      <DiamondDivider compact />
+      <span className="hero-panel-label">B.Tech CSE (AIML) · Open to Opportunities</span>
+      <h1>
+        <span>{firstName}</span>
+        <span>{lastNameParts.join(' ')}</span>
+      </h1>
+      <DiamondDivider compact />
+      <p className="hero-panel-role">Flutter × AI/ML Developer</p>
+      <p className="hero-panel-subtitle">Full Stack Engineer</p>
+      <DiamondDivider compact />
       <strong>{data.tagline}</strong>
       <div className="panel-availability">
         <i />
-        {data.availability}
+        {displayText(data.availability)}
       </div>
       <div className="hero-panel-actions">
         <button type="button" onClick={() => setTargetProgress(sectionTValues.about)}>
           View My Work
-          <ArrowRight size={16} />
+          <ArrowRight size={15} />
         </button>
         <a href={portfolioAssets.resume} download>
           Download Resume
-          <Download size={16} />
+          <Download size={15} />
         </a>
       </div>
     </div>
@@ -86,7 +127,7 @@ function CyclingBuild() {
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
         >
-          {buildingPhrases[index]}
+          {displayText(buildingPhrases[index])}
         </motion.b>
       </AnimatePresence>
     </div>
@@ -103,22 +144,22 @@ function AboutPanel() {
       <div className="about-copy-stack">
         {portfolioData.about.paragraphs.map((paragraph) => (
           <p key={paragraph} className="panel-body-copy">
-            {paragraph}
+            {displayText(paragraph)}
           </p>
         ))}
       </div>
       <div className="detail-pills">
-        <Tag>🎓 {data.degree}</Tag>
-        <Tag>📍 {data.location}</Tag>
-        <Tag>📅 {data.year}</Tag>
+        <Tag>{data.degree}</Tag>
+        <Tag>{data.location}</Tag>
+        <Tag>Final Year · 2027 Expected</Tag>
       </div>
       <CyclingBuild />
-      <div className="panel-divider" />
+      <PanelDivider />
       <div className="stats-grid">
         {stats.map(({ value, label }) => (
           <section key={label}>
-            <strong>{value}</strong>
-            <span>{label}</span>
+            <strong>{displayText(value)}</strong>
+            <span>{displayText(label)}</span>
           </section>
         ))}
       </div>
@@ -144,9 +185,9 @@ function SkillsPanel() {
     <>
       <PanelHeader section="skills" />
       <SkillGroup title="MOBILE DEVELOPMENT" skills={portfolioData.skills.mobile} />
-      <div className="panel-divider" />
+      <PanelDivider />
       <SkillGroup title="AI & MACHINE LEARNING" skills={portfolioData.skills.aiml} />
-      <div className="panel-divider" />
+      <PanelDivider />
       <SkillGroup title="FULL STACK & BACKEND" skills={portfolioData.skills.fullstack} />
     </>
   );
@@ -175,7 +216,7 @@ function ProjectsPanel() {
         {projects.map((project) => (
           <motion.article key={project.name} className="panel-project-card" whileHover={{ y: -2 }}>
             <div className="panel-project-topline">
-              <span>{project.category}</span>
+              <span>{displayText(project.category)}</span>
               {project.featured ? (
                 <em>
                   <Star size={11} />
@@ -183,8 +224,8 @@ function ProjectsPanel() {
                 </em>
               ) : null}
             </div>
-            <h3>{project.name}</h3>
-            <p>{project.description}</p>
+            <h3>{displayText(project.name)}</h3>
+            <p>{displayText(project.description)}</p>
             <div className="panel-tech-row">
               {project.tech.map((tech) => (
                 <Tag key={tech}>{tech}</Tag>
@@ -214,7 +255,7 @@ function CountUpValue({ value }) {
 
   useEffect(() => {
     if (!parsed) {
-      setDisplay(textValue);
+      setDisplay(displayText(textValue));
       return undefined;
     }
 
@@ -248,12 +289,12 @@ function AIPanel() {
       {aiProjects.map((project) => (
         <article key={project.name} className="ai-project-card">
           <span>AI SYSTEM</span>
-          <h3>{project.name}</h3>
-          <p>{project.description}</p>
+          <h3>{displayText(project.name)}</h3>
+          <p>{displayText(project.description)}</p>
           <div className="metrics-grid">
             {Object.entries(project.metrics).map(([label, value]) => (
               <section key={label}>
-                <span>{label}</span>
+                <span>{displayText(label)}</span>
                 <strong>
                   <CountUpValue value={value} />
                 </strong>
@@ -273,7 +314,7 @@ function AIPanel() {
           </div>
         </article>
       ))}
-      <div className="panel-divider" />
+      <PanelDivider />
       <div className="ai-statement">
         <strong>Flutter meets AI.</strong>
         <em>I build apps that think.</em>
@@ -295,9 +336,9 @@ function TimelinePanel() {
               visible: { opacity: 1, y: 0, transition: { delay: index * 0.06 } },
             }}
           >
-            <time>{item.year}</time>
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
+            <time>{displayText(item.year)}</time>
+            <h3>{displayText(item.title)}</h3>
+            <p>{displayText(item.description)}</p>
             <div>
               {item.tags.map((tag) => (
                 <Tag key={tag}>{tag}</Tag>
@@ -335,12 +376,12 @@ function GitHubPanel() {
       <div className="github-stat-grid">
         {stats.map(([value, label]) => (
           <section key={label}>
-            <strong>{value}</strong>
+            <strong>{displayText(value)}</strong>
             <span>{label}</span>
           </section>
         ))}
       </div>
-      <div className="panel-divider" />
+      <PanelDivider />
       <section className="github-heatmap-block">
         <h3>Contribution Activity</h3>
         <div className="github-heatmap">
@@ -355,18 +396,18 @@ function GitHubPanel() {
           ))}
         </div>
       </section>
-      <div className="panel-divider" />
+      <PanelDivider />
       <div className="pinned-repos">
         {portfolioData.github.pinned.map((repo) => (
           <article key={repo.name}>
             <div>
               <h3>
                 <Github size={15} />
-                {repo.name}
+                {displayText(repo.name)}
               </h3>
               <Tag>{repo.language}</Tag>
             </div>
-            <p>{repo.description}</p>
+            <p>{displayText(repo.description)}</p>
             <footer>
               <span>
                 <Star size={13} />
@@ -427,7 +468,7 @@ function ContactPanel() {
           )}
         </button>
       </form>
-      <div className="panel-divider" />
+      <PanelDivider />
       <section className="direct-channels">
         <h3>Direct Channels</h3>
         <a href={`mailto:${portfolioData.contact.email}`}>
@@ -447,7 +488,7 @@ function ContactPanel() {
       </section>
       <aside className="availability-card">
         <i />
-        {portfolioData.contact.availability}
+        {displayText(portfolioData.contact.availability)}
       </aside>
     </>
   );
@@ -465,37 +506,183 @@ function renderPanel(section) {
   return null;
 }
 
-export default function ContentPanel({ activeSection }) {
+const boardVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.88,
+    x: '-50%',
+    y: '-46%',
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    x: '-50%',
+    y: '-50%',
+    filter: 'blur(0px)',
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.94,
+    x: '-50%',
+    y: '-56%',
+    filter: 'blur(4px)',
+    transition: { duration: 0.4, ease: [0.4, 0, 1, 1] },
+  },
+};
+
+const heroVariants = (delay) => ({
+  hidden: {
+    x: -400,
+    y: '-50%',
+    opacity: 0,
+  },
+  visible: {
+    x: 0,
+    y: '-50%',
+    opacity: 1,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay },
+  },
+  exit: {
+    x: -400,
+    y: '-50%',
+    opacity: 0,
+    transition: { duration: 0.4, ease: [0.4, 0, 1, 1] },
+  },
+});
+
+export { DiamondDivider };
+
+export default function ContentPanel({ activeSection, boardState = 'walking', exitBoard }) {
   const isHero = activeSection === 'hero';
+  const isBoard = Boolean(activeSection && !isHero);
+  const shouldShowPanel = Boolean(activeSection && (isHero || boardState !== 'walking'));
   const contentRef = useRef(null);
+  const heroHasAnimatedRef = useRef(false);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const board = contentRef.current;
+    if (!board || !isBoard) {
+      setIsScrollable(false);
+      setIsAtBottom(false);
+      return;
+    }
+
+    const scrollable = board.scrollHeight - board.clientHeight > 12;
+    setIsScrollable(scrollable);
+    setIsAtBottom(!scrollable || board.scrollTop + board.clientHeight >= board.scrollHeight - 12);
+  }, [isBoard]);
+
+  const applyBoardScroll = useCallback(
+    (delta) => {
+      const board = contentRef.current;
+      if (!board || boardState !== 'board-open') return;
+
+      const atBottom = board.scrollTop + board.clientHeight >= board.scrollHeight - 10;
+      const atTop = board.scrollTop <= 0;
+
+      if (delta > 0 && atBottom) {
+        exitBoard?.('forward');
+        return;
+      }
+
+      if (delta < 0 && atTop) {
+        exitBoard?.('backward');
+        return;
+      }
+
+      board.scrollTop += delta * 0.8;
+      window.requestAnimationFrame(updateScrollState);
+    },
+    [boardState, exitBoard, updateScrollState],
+  );
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
-  }, [activeSection]);
+    const frameId = window.requestAnimationFrame(updateScrollState);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeSection, updateScrollState]);
+
+  useEffect(() => {
+    if (isHero) heroHasAnimatedRef.current = true;
+  }, [isHero]);
+
+  useEffect(() => {
+    if (!isBoard || boardState === 'walking') return undefined;
+
+    const handleWheel = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (boardState !== 'board-open') return;
+      applyBoardScroll(event.deltaY);
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false, capture: true });
+    return () => window.removeEventListener('wheel', handleWheel, { capture: true });
+  }, [applyBoardScroll, boardState, isBoard]);
+
+  useEffect(() => {
+    if (!isBoard || boardState === 'walking') return undefined;
+
+    const keyScroll = {
+      ArrowDown: 90,
+      ArrowRight: 90,
+      PageDown: 320,
+      ' ': 320,
+      ArrowUp: -90,
+      ArrowLeft: -90,
+      PageUp: -320,
+    };
+
+    const handleKeyDown = (event) => {
+      if (!(event.key in keyScroll)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (boardState === 'board-open') {
+        applyBoardScroll(keyScroll[event.key]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, [applyBoardScroll, boardState, isBoard]);
+
+  const heroDelay = isHero && !heroHasAnimatedRef.current ? 0.5 : 0;
+  const variants = isHero ? heroVariants(heroDelay) : boardVariants;
 
   return (
     <AnimatePresence mode="wait">
-      {activeSection ? (
+      {shouldShowPanel ? (
         <motion.aside
           key={activeSection}
-          className={`content-panel wood-panel ${isHero ? 'hero-content-panel' : 'section-content-panel'}`}
-          initial={isHero ? { x: '-100%', y: '-50%', opacity: 0 } : { x: '-50%', y: '-44%', scale: 0.92, opacity: 0 }}
-          animate={isHero ? { x: 0, y: '-50%', opacity: 1 } : { x: '-50%', y: '-50%', scale: 1, opacity: 1 }}
-          exit={isHero ? { x: '-100%', y: '-50%', opacity: 0 } : { x: '-50%', y: '-60%', scale: 1.08, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className={`content-panel wood-panel ${isHero ? 'hero-content-panel' : 'section-content-panel'} ${isBoard ? `is-${boardState}` : ''}`}
+          variants={variants}
+          initial="hidden"
+          animate={isBoard && boardState === 'board-exiting' ? 'exit' : 'visible'}
+          exit="exit"
           aria-live="polite"
         >
-          <div ref={contentRef} className="content-panel-inner">{renderPanel(activeSection)}</div>
-          {!isHero ? (
-            <button
-              type="button"
-              className="wood-scroll-tab"
-              onClick={() => contentRef.current?.scrollBy({ top: 280, behavior: 'smooth' })}
-              aria-label="Scroll inside wooden board"
-            >
-              <span>Scroll</span>
-              <ChevronDown size={15} />
-            </button>
+          <BoardNails hero={isHero} />
+          <div ref={contentRef} className="content-panel-inner" onScroll={updateScrollState}>
+            {renderPanel(activeSection)}
+            {isBoard ? (
+              <>
+                <DiamondDivider />
+                <p className="board-end-note">↑ scroll up · scroll down to continue journey ↓</p>
+              </>
+            ) : null}
+          </div>
+          {isBoard && isScrollable && !isAtBottom ? (
+            <div className="board-scroll-fade" aria-hidden="true">
+              <span>scroll to read more ↓</span>
+            </div>
           ) : null}
         </motion.aside>
       ) : null}

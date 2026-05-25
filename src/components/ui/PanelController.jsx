@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sectionTValues } from '../../data/portfolio';
 
-export function usePanelSystem(progressRef) {
+const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+const BOARD_ENTER_MS = 600;
+const BOARD_EXIT_MS = 500;
+
+export function usePanelSystem({ progressRef, targetProgressRef, setTargetProgress }) {
   const sections = useMemo(
     () => [
       { id: 'hero', t: sectionTValues.hero },
@@ -15,75 +19,172 @@ export function usePanelSystem(progressRef) {
     ],
     [],
   );
+  const boardSections = useMemo(() => sections.filter((section) => section.id !== 'hero'), [sections]);
   const [activeSection, setActiveSection] = useState('hero');
+  const [boardState, setBoardState] = useState('walking');
+  const [navigationTarget, setNavigationTarget] = useState(null);
   const activeSectionRef = useRef('hero');
+  const boardStateRef = useRef('walking');
+  const lockedSectionRef = useRef(null);
   const dismissedSectionRef = useRef(null);
+  const pendingNavigationRef = useRef(null);
+  const timersRef = useRef([]);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    timersRef.current = [];
+  }, []);
+
+  const setActive = useCallback((sectionId) => {
+    if (activeSectionRef.current === sectionId) return;
+    activeSectionRef.current = sectionId;
+    setActiveSection(sectionId);
+  }, []);
+
+  const setState = useCallback((nextState) => {
+    if (boardStateRef.current === nextState) return;
+    boardStateRef.current = nextState;
+    setBoardState(nextState);
+  }, []);
+
+  const beginBoard = useCallback(
+    (section) => {
+      clearTimers();
+      pendingNavigationRef.current = null;
+      setNavigationTarget(null);
+      lockedSectionRef.current = section;
+      setTargetProgress(section.t, false);
+      setActive(section.id);
+      setState('board-entering');
+
+      const enterTimer = window.setTimeout(() => {
+        if (lockedSectionRef.current?.id === section.id && boardStateRef.current === 'board-entering') {
+          setState('board-open');
+        }
+      }, BOARD_ENTER_MS);
+
+      timersRef.current.push(enterTimer);
+    },
+    [clearTimers, setActive, setState, setTargetProgress],
+  );
+
+  const exitBoard = useCallback(
+    (direction = 'forward') => {
+      const section = lockedSectionRef.current || sections.find((item) => item.id === activeSectionRef.current);
+      if (!section || section.id === 'hero') return;
+
+      clearTimers();
+      pendingNavigationRef.current = null;
+      setNavigationTarget(null);
+      dismissedSectionRef.current = section.id;
+      setState('board-exiting');
+      setTargetProgress(clamp(section.t + (direction === 'forward' ? 0.07 : -0.07)), true);
+
+      const exitTimer = window.setTimeout(() => {
+        lockedSectionRef.current = null;
+        setActive(null);
+        setState('walking');
+      }, BOARD_EXIT_MS);
+
+      timersRef.current.push(exitTimer);
+    },
+    [clearTimers, sections, setActive, setState, setTargetProgress],
+  );
+
+  const navigateToSection = useCallback(
+    (sectionId) => {
+      const section = sections.find((item) => item.id === sectionId);
+      if (!section) return;
+
+      clearTimers();
+      lockedSectionRef.current = null;
+      dismissedSectionRef.current = null;
+      pendingNavigationRef.current = section;
+      setNavigationTarget(section.id);
+      setState('walking');
+      setActive(sectionId === 'hero' ? 'hero' : null);
+      setTargetProgress(section.t, true);
+    },
+    [clearTimers, sections, setActive, setState, setTargetProgress],
+  );
 
   useEffect(() => {
     let frameId;
 
     const updateActiveSection = () => {
       const progress = progressRef.current;
-      let nearest = null;
-      let nearestDistance = 0.06;
-      const current = activeSectionRef.current;
-      const dismissedSection = sections.find((section) => section.id === dismissedSectionRef.current);
+      const dismissedSection = boardSections.find((section) => section.id === dismissedSectionRef.current);
 
       if (dismissedSection && Math.abs(progress - dismissedSection.t) > 0.09) {
         dismissedSectionRef.current = null;
       }
 
-      const dismissedId = dismissedSectionRef.current;
-
-      if (current === 'hero') {
-        nearest = progress > 0.06 ? null : 'hero';
-      } else if (!current && progress < 0.03 && dismissedId !== 'hero') {
-        nearest = 'hero';
-      } else if (current && current !== 'hero') {
-        const active = sections.find((section) => section.id === current);
-        nearest = active && Math.abs(progress - active.t) <= 0.08 && current !== dismissedId ? current : null;
+      if ((boardStateRef.current === 'board-entering' || boardStateRef.current === 'board-open') && lockedSectionRef.current) {
+        targetProgressRef.current = lockedSectionRef.current.t;
       }
 
-      if (nearest !== 'hero') {
-        for (const section of sections) {
-          if (section.id === 'hero' || section.id === dismissedId) continue;
+      if (boardStateRef.current === 'walking') {
+        const pendingNavigation = pendingNavigationRef.current;
+
+        if (pendingNavigation) {
+          if (pendingNavigation.id === 'hero') {
+            if (progress < 0.03) {
+              pendingNavigationRef.current = null;
+              setNavigationTarget(null);
+              setActive('hero');
+            } else if (activeSectionRef.current === 'hero' && progress > 0.06) {
+              setActive(null);
+            }
+
+            frameId = window.requestAnimationFrame(updateActiveSection);
+            return;
+          }
+
+          if (activeSectionRef.current === 'hero' && progress > 0.06) {
+            setActive(null);
+          }
+
+          if (Math.abs(progress - pendingNavigation.t) <= 0.05) {
+            beginBoard(pendingNavigation);
+          }
+
+          frameId = window.requestAnimationFrame(updateActiveSection);
+          return;
+        }
+
+        if (progress < 0.03) {
+          setActive('hero');
+        } else if (activeSectionRef.current === 'hero' && progress > 0.06) {
+          setActive(null);
+        }
+
+        let nearest = null;
+        let nearestDistance = 0.05;
+        const dismissedId = dismissedSectionRef.current;
+
+        for (const section of boardSections) {
+          if (section.id === dismissedId) continue;
           const distance = Math.abs(progress - section.t);
           if (distance <= nearestDistance) {
+            nearest = section;
             nearestDistance = distance;
-            nearest = section.id;
           }
         }
-      }
 
-      if (nearest !== activeSectionRef.current) {
-        activeSectionRef.current = nearest;
-        setActiveSection(nearest);
+        if (nearest) {
+          beginBoard(nearest);
+        }
       }
 
       frameId = window.requestAnimationFrame(updateActiveSection);
     };
 
     frameId = window.requestAnimationFrame(updateActiveSection);
-    return () => window.cancelAnimationFrame(frameId);
-  }, [progressRef, sections]);
-
-  useEffect(() => {
-    const handleOutsideWheel = (event) => {
-      if (event.target instanceof Element && event.target.closest('.content-panel')) {
-        return;
-      }
-
-      const current = activeSectionRef.current;
-      if (!current) return;
-
-      dismissedSectionRef.current = current;
-      activeSectionRef.current = null;
-      setActiveSection(null);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      clearTimers();
     };
+  }, [beginBoard, boardSections, clearTimers, progressRef, setActive, targetProgressRef]);
 
-    window.addEventListener('wheel', handleOutsideWheel, { passive: true });
-    return () => window.removeEventListener('wheel', handleOutsideWheel);
-  }, []);
-
-  return { activeSection };
+  return { activeSection, boardState, exitBoard, navigateToSection, navigationTarget };
 }

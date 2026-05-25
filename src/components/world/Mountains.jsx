@@ -1,5 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { sectionTValues } from '../../data/portfolio';
+import { useCameraProgress } from '../../hooks/useCameraProgress';
 import { seededRandom } from './path';
 
 export const sectionMountains = [
@@ -26,6 +29,30 @@ const backgroundMountains = [
   { position: [28, 0, -286], radius: 10, height: 36 },
 ];
 
+const mountainColors = {
+  hero: '#4a6741',
+  about: '#3d5c4a',
+  skills: '#506844',
+  projects: '#445a38',
+  ai: '#3a5240',
+  timeline: '#4e6040',
+  github: '#425838',
+  contact: '#486042',
+};
+
+const mountainGlowColors = {
+  hero: '#fff5e0',
+  about: '#fff5e0',
+  skills: '#e0f5ff',
+  projects: '#e0ffe8',
+  ai: '#f0e0ff',
+  timeline: '#fff0e0',
+  github: '#e0ffe0',
+  contact: '#ffe8e0',
+};
+
+const backgroundMountainColors = ['#7a9a90', '#8aaa9a', '#6a8a80'];
+
 function makeMountainGeometry(radius, height, seed) {
   const geometry = new THREE.ConeGeometry(radius, height, 24, 8);
   const position = geometry.attributes.position;
@@ -47,27 +74,32 @@ function makeMountainGeometry(radius, height, seed) {
 
 const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
   const isDay = mode === 'day';
+  const { progressRef } = useCameraProgress();
+  const snowRef = useRef(null);
   const snowHeight = mountain.height * 0.23;
   const geometry = useMemo(() => makeMountainGeometry(mountain.radius, mountain.height, index + 1), [index, mountain.height, mountain.radius]);
   const snowGeometry = useMemo(() => new THREE.ConeGeometry(mountain.radius * 0.34, snowHeight, 24, 3), [mountain.radius, snowHeight]);
   const patchGeometry = useMemo(() => new THREE.DodecahedronGeometry(0.65, 0), []);
+  const ledgeGeometry = useMemo(() => new THREE.BoxGeometry(1, 0.18, 0.5), []);
   const baseMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#4a6741' : '#1a2535',
+        color: isDay ? mountainColors[mountain.id] : '#1a2535',
         roughness: 0.85,
         metalness: 0,
       }),
-    [isDay],
+    [isDay, mountain.id],
   );
   const snowMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
         color: isDay ? '#e8f0eb' : '#d5deea',
+        emissive: mountainGlowColors[mountain.id] || '#fff5e0',
+        emissiveIntensity: 0.05,
         roughness: 0.9,
         metalness: 0,
       }),
-    [isDay],
+    [isDay, mountain.id],
   );
   const patchMaterial = useMemo(
     () =>
@@ -79,9 +111,19 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
     [isDay],
   );
 
+  const ledgeMaterial = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: isDay ? '#8aa078' : '#40536a',
+        roughness: 0.94,
+        metalness: 0,
+      }),
+    [isDay],
+  );
+
   const patches = useMemo(
     () =>
-      Array.from({ length: 3 }, (_, patchIndex) => {
+      Array.from({ length: 5 }, (_, patchIndex) => {
         const angle = seededRandom(index * 19 + patchIndex) * Math.PI * 2;
         const y = mountain.height * (0.34 + seededRandom(index * 29 + patchIndex) * 0.28);
         const radial = mountain.radius * (1 - y / mountain.height) * 0.9;
@@ -94,10 +136,33 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
     [index, mountain.height, mountain.radius],
   );
 
+  const ledges = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, ledgeIndex) => {
+        const angle = seededRandom(index * 41 + ledgeIndex) * Math.PI * 2;
+        const y = mountain.height * (0.18 + seededRandom(index * 43 + ledgeIndex) * 0.44);
+        const radial = mountain.radius * (1 - y / mountain.height) * 0.78;
+        return {
+          position: [Math.cos(angle) * radial, y, Math.sin(angle) * radial],
+          rotation: [seededRandom(ledgeIndex + 6) * 0.4, -angle, seededRandom(ledgeIndex + 12) * 0.2],
+          scale: [0.9 + seededRandom(ledgeIndex + 16) * 1.2, 1, 0.7 + seededRandom(ledgeIndex + 20) * 0.7],
+        };
+      }),
+    [index, mountain.height, mountain.radius],
+  );
+
+  useFrame((_, delta) => {
+    if (!snowRef.current) return;
+    const distance = Math.abs(progressRef.current - sectionTValues[mountain.id]);
+    const targetIntensity = distance <= 0.08 ? 0.25 : 0.05;
+    const material = snowRef.current.material;
+    material.emissiveIntensity = THREE.MathUtils.lerp(material.emissiveIntensity, targetIntensity, delta * 2);
+  });
+
   return (
     <group position={mountain.position}>
       <mesh geometry={geometry} material={baseMaterial} position={[0, mountain.height / 2, 0]} />
-      <mesh geometry={snowGeometry} material={snowMaterial} position={[0, mountain.height - snowHeight / 2, 0]} />
+      <mesh ref={snowRef} geometry={snowGeometry} material={snowMaterial} position={[0, mountain.height - snowHeight / 2, 0]} />
       {patches.map((patch) => (
         <mesh
           key={`${patch.position[0]}-${patch.position[1]}`}
@@ -108,11 +173,21 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
           scale={patch.scale}
         />
       ))}
+      {ledges.map((ledge) => (
+        <mesh
+          key={`${ledge.position[0]}-${ledge.position[1]}-ledge`}
+          geometry={ledgeGeometry}
+          material={ledgeMaterial}
+          position={ledge.position}
+          rotation={ledge.rotation}
+          scale={ledge.scale}
+        />
+      ))}
     </group>
   );
 });
 
-const BackgroundMountain = React.memo(function BackgroundMountain({ mountain, mode }) {
+const BackgroundMountain = React.memo(function BackgroundMountain({ mountain, mode, index }) {
   const isDay = mode === 'day';
   const geometry = useMemo(() => makeMountainGeometry(mountain.radius, mountain.height, mountain.position[2] * -1), [mountain.height, mountain.position, mountain.radius]);
   const snowHeight = mountain.height * 0.18;
@@ -120,13 +195,13 @@ const BackgroundMountain = React.memo(function BackgroundMountain({ mountain, mo
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#6f9a82' : '#24364e',
+        color: isDay ? backgroundMountainColors[index % backgroundMountainColors.length] : '#24364e',
         roughness: 0.95,
         metalness: 0,
         transparent: true,
         opacity: isDay ? 0.82 : 0.62,
       }),
-    [isDay],
+    [index, isDay],
   );
   const snowMaterial = useMemo(
     () =>
@@ -151,8 +226,8 @@ const BackgroundMountain = React.memo(function BackgroundMountain({ mountain, mo
 const Mountains = React.memo(function Mountains({ mode }) {
   return (
     <group>
-      {backgroundMountains.map((mountain) => (
-        <BackgroundMountain key={`${mountain.position[0]}-${mountain.position[2]}`} mountain={mountain} mode={mode} />
+      {backgroundMountains.map((mountain, index) => (
+        <BackgroundMountain key={`${mountain.position[0]}-${mountain.position[2]}`} mountain={mountain} mode={mode} index={index} />
       ))}
       {sectionMountains.map((mountain, index) => (
         <Mountain key={mountain.id} mountain={mountain} mode={mode} index={index} />

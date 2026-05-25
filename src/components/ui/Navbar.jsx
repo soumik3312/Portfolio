@@ -1,7 +1,7 @@
 import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import DayNightToggle from './DayNightToggle';
-import { portfolioData, sectionTValues } from '../../data/portfolio';
+import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
 
 const navLinks = [
@@ -15,10 +15,14 @@ const navLinks = [
   { label: 'Contact', id: 'contact' },
 ];
 
-const Navbar = React.memo(function Navbar({ activeSection, mode, onToggleMode, soundEnabled, onToggleSound }) {
+const Navbar = React.memo(function Navbar({ activeSection, mode, onToggleMode, soundEnabled, onToggleSound, onNavigate }) {
   const { setTargetProgress } = useCameraProgress();
 
   const goToSection = (sectionId) => {
+    if (onNavigate) {
+      onNavigate(sectionId);
+      return;
+    }
     setTargetProgress(sectionTValues[sectionId]);
   };
 
@@ -48,6 +52,9 @@ const Navbar = React.memo(function Navbar({ activeSection, mode, onToggleMode, s
           <button type="button" className="icon-button" onClick={onToggleSound} aria-label="Toggle sound" aria-pressed={soundEnabled} title="Sound">
             {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
           </button>
+          <a className="navbar-resume-link" href={portfolioAssets.resume} download>
+            Resume
+          </a>
         </div>
       </nav>
     </header>

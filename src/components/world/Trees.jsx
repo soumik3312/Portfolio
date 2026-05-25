@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createJourneyCurve, seededRandom } from './path';
@@ -98,6 +99,25 @@ const Trees = React.memo(function Trees({ mode }) {
     trunkRef.current.instanceMatrix.needsUpdate = true;
     foliageRef.current.instanceMatrix.needsUpdate = true;
   }, [dummy, trees]);
+
+  useFrame((state) => {
+    if (!foliageRef.current) return;
+    const time = state.clock.elapsedTime;
+
+    trees.forEach((tree, index) => {
+      dummy.position.set(tree.x, 0, tree.z);
+      dummy.rotation.set(
+        Math.sin(time * 0.6 + index * 0.3) * 0.01,
+        tree.rotation,
+        Math.sin(time * 0.8 + index * 0.5) * 0.02,
+      );
+      dummy.scale.setScalar(tree.scale);
+      dummy.updateMatrix();
+      foliageRef.current.setMatrixAt(index, dummy.matrix);
+    });
+
+    foliageRef.current.instanceMatrix.needsUpdate = true;
+  });
 
   return (
     <group>

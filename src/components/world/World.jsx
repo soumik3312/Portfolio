@@ -52,7 +52,7 @@ const SceneContent = React.memo(function SceneContent({ mode }) {
   );
 });
 
-const World = React.memo(function World({ mode, onReady }) {
+const World = React.memo(function World({ mode, onReady, blurred = false }) {
   const handleCreated = useCallback(
     ({ scene }) => {
       scene.background = null;
@@ -80,7 +80,7 @@ const World = React.memo(function World({ mode, onReady }) {
         position: [0, 1.8, 0],
       }}
       onCreated={handleCreated}
-      className="world-canvas"
+      className={`world-canvas ${blurred ? 'canvas-blurred' : 'canvas-normal'}`}
     >
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
