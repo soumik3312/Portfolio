@@ -28,10 +28,16 @@ const Lights = React.memo(function Lights({ mode }) {
   const isDay = mode === 'day';
   return (
     <>
-      <ambientLight color={isDay ? '#d8efe0' : '#c7d5ec'} intensity={isDay ? 1.2 : 1.62} />
-      <directionalLight position={isDay ? [24, 35, 18] : [-18, 26, 14]} color={isDay ? '#fff5d6' : '#f2f8ff'} intensity={isDay ? 2.1 : 1.24} />
-      <hemisphereLight color={isDay ? '#bfe8ff' : '#7594b8'} groundColor={isDay ? '#5f8d4f' : '#8a6640'} intensity={isDay ? 0.62 : 1.18} />
-      {!isDay ? <ambientLight color="#ffe1a0" intensity={0.62} /> : null}
+      <ambientLight color={isDay ? '#d8efe0' : '#dbe8ff'} intensity={isDay ? 1.2 : 1.95} />
+      <directionalLight position={isDay ? [24, 35, 18] : [-18, 28, 14]} color={isDay ? '#fff5d6' : '#f4fbff'} intensity={isDay ? 2.1 : 1.5} />
+      <hemisphereLight color={isDay ? '#bfe8ff' : '#91add0'} groundColor={isDay ? '#5f8d4f' : '#997452'} intensity={isDay ? 0.62 : 1.36} />
+      {!isDay ? (
+        <>
+          <ambientLight color="#ffe1a0" intensity={0.72} />
+          <directionalLight position={[12, 18, -28]} color="#d9ecff" intensity={0.42} />
+          <pointLight color="#fff0ba" intensity={0.9} distance={70} decay={1.2} position={[0, 8, -90]} />
+        </>
+      ) : null}
     </>
   );
 });
@@ -39,7 +45,7 @@ const Lights = React.memo(function Lights({ mode }) {
 const SceneContent = React.memo(function SceneContent({ mode }) {
   return (
     <>
-      <fog attach="fog" args={[mode === 'day' ? '#c8e8d4' : '#6b819b', mode === 'day' ? 95 : 150, mode === 'day' ? 285 : 360]} />
+      <fog attach="fog" args={[mode === 'day' ? '#c8e8d4' : '#7890a8', mode === 'day' ? 95 : 125, mode === 'day' ? 285 : 350]} />
       <CameraController />
       <Lights mode={mode} />
       <Sky mode={mode} />

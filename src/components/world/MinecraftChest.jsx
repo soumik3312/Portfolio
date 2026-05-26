@@ -92,24 +92,24 @@ const MinecraftChest = React.memo(function MinecraftChest({ sectionId, position,
   useFrame((state, delta) => {
     const sectionT = sectionTValues[sectionId];
     const distance = Math.abs(progressRef.current - sectionT);
-    const active = distance <= 0.055;
+    const active = distance <= 0.075;
     const openAmount = active ? 1 : 0;
 
     if (lidRef.current) {
-      lidRef.current.rotation.x = THREE.MathUtils.lerp(lidRef.current.rotation.x, -1.15 * openAmount, delta * 5);
+      lidRef.current.rotation.x = THREE.MathUtils.lerp(lidRef.current.rotation.x, -1.25 * openAmount, delta * 5);
     }
 
     if (itemGroupRef.current) {
       itemGroupRef.current.visible = openAmount > 0.01 || itemGroupRef.current.visible;
-      itemGroupRef.current.position.y = THREE.MathUtils.lerp(itemGroupRef.current.position.y, openAmount * 0.62, delta * 4);
-      itemGroupRef.current.rotation.y += delta * openAmount * 0.7;
+      itemGroupRef.current.position.y = THREE.MathUtils.lerp(itemGroupRef.current.position.y, openAmount * 0.78, delta * 4);
+      itemGroupRef.current.rotation.y += delta * openAmount * 0.9;
     }
 
     itemMaterialsRef.current.forEach((material, index) => {
       material.opacity = THREE.MathUtils.lerp(material.opacity, active ? 0.92 : 0, delta * 5);
       material.emissiveIntensity = (isNight ? 0.45 : 0.16) + Math.sin(state.clock.elapsedTime * 2 + index) * 0.08;
     });
-    beamMaterial.opacity = THREE.MathUtils.lerp(beamMaterial.opacity, active ? (isNight ? 0.2 : 0.12) : 0, delta * 5);
+    beamMaterial.opacity = THREE.MathUtils.lerp(beamMaterial.opacity, active ? (isNight ? 0.32 : 0.2) : 0, delta * 5);
   });
 
   return (
@@ -137,7 +137,7 @@ const MinecraftChest = React.memo(function MinecraftChest({ sectionId, position,
           />
         ))}
       </group>
-      <pointLight color="#ffe28a" intensity={isNight ? 0.85 : 0.15} distance={4.6} decay={2} position={[0, 1.5, 0.5]} />
+      <pointLight color="#ffe28a" intensity={isNight ? 1.15 : 0.28} distance={5.2} decay={2} position={[0, 1.5, 0.5]} />
     </group>
   );
 });

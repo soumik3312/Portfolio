@@ -429,6 +429,13 @@ function CountUpValue({ value }) {
   return display;
 }
 
+function getVisibleMetrics(project) {
+  const metrics = Object.entries(project.metrics || {});
+  if (project.name === 'J.A.R.V.I.S') return metrics.filter(([label]) => label === 'accuracy');
+  if (project.name === 'NoteGenius AI') return metrics.filter(([label]) => label !== 'dataset');
+  return metrics;
+}
+
 function AIPanel() {
   const aiProjects = portfolioData.projects.filter((project) => project.metrics);
 
@@ -436,13 +443,16 @@ function AIPanel() {
     <>
       <PanelHeader section="ai" />
       <p className="ai-intro">Most Flutter devs don't have this.</p>
-      {aiProjects.map((project) => (
-        <article key={project.name} className="ai-project-card">
+      {aiProjects.map((project) => {
+        const visibleMetrics = getVisibleMetrics(project);
+
+        return (
+          <article key={project.name} className="ai-project-card">
           <span>AI SYSTEM</span>
           <h3>{displayText(project.name)}</h3>
           <p>{displayText(project.description)}</p>
-          <div className="metrics-grid">
-            {Object.entries(project.metrics).map(([label, value]) => (
+          <div className="metrics-grid" data-count={visibleMetrics.length}>
+            {visibleMetrics.map(([label, value]) => (
               <section key={label}>
                 <span>{displayText(label)}</span>
                 <strong>
@@ -476,8 +486,9 @@ function AIPanel() {
               </div>
             </div>
           ) : null}
-        </article>
-      ))}
+          </article>
+        );
+      })}
       <PanelDivider />
       <div className="ai-statement">
         <strong>Flutter meets AI.</strong>
@@ -802,6 +813,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   const shouldShowPanel = Boolean(activeSection && (isHero || boardState !== 'walking'));
   const contentRef = useRef(null);
   const heroHasAnimatedRef = useRef(false);
+  const touchScrollRef = useRef({ tracking: false, lastY: 0 });
   const [isScrollable, setIsScrollable] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
 
@@ -871,6 +883,56 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   useEffect(() => {
     if (!isBoard || boardState === 'walking') return undefined;
 
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1) {
+        touchScrollRef.current.tracking = false;
+        return;
+      }
+
+      touchScrollRef.current = {
+        tracking: true,
+        lastY: event.touches[0].clientY,
+      };
+    };
+
+    const handleTouchMove = (event) => {
+      const state = touchScrollRef.current;
+      if (!state.tracking || event.touches.length !== 1) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (boardState !== 'board-open') return;
+      const currentY = event.touches[0].clientY;
+      const deltaY = state.lastY - currentY;
+      state.lastY = currentY;
+
+      if (Math.abs(deltaY) > 0.35) {
+        applyBoardScroll(deltaY * 1.15);
+      }
+    };
+
+    const stopTouchScroll = () => {
+      touchScrollRef.current.tracking = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    window.addEventListener('touchend', stopTouchScroll, { passive: true });
+    window.addEventListener('touchcancel', stopTouchScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      window.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      window.removeEventListener('touchend', stopTouchScroll);
+      window.removeEventListener('touchcancel', stopTouchScroll);
+    };
+  }, [applyBoardScroll, boardState, isBoard]);
+
+  useEffect(() => {
+    if (!isBoard || boardState === 'walking') return undefined;
+
     const keyScroll = {
       ArrowDown: 90,
       ArrowRight: 90,
@@ -912,6 +974,13 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
           exit="exit"
           aria-live="polite"
         >
+          {isBoard ? (
+            <div className="board-reveal-burst" aria-hidden="true">
+              {Array.from({ length: 12 }, (_, index) => (
+                <span key={index} style={{ '--burst-index': index }} />
+              ))}
+            </div>
+          ) : null}
           <BoardNails hero={isHero} />
           <div ref={contentRef} className="content-panel-inner" onScroll={updateScrollState}>
             {renderPanel(activeSection)}

@@ -14,8 +14,8 @@ const CameraController = React.memo(function CameraController() {
 
   useEffect(() => {
     if (isMobile) {
-      camera.position.set(0, 2.6, 10);
-      camera.lookAt(0, 2, -14);
+      camera.position.set(0, 2.05, 0);
+      camera.lookAt(0.2, 1.9, -8);
       return;
     }
 
@@ -24,18 +24,14 @@ const CameraController = React.memo(function CameraController() {
   }, [camera, isMobile]);
 
   useFrame((state, delta) => {
-    if (isMobile) {
-      state.camera.position.lerp(cameraTarget.set(0, 2.6, 10), delta * 2);
-      state.camera.lookAt(0, 2, -14);
-      publishProgress(0);
-      return;
-    }
-
     progressRef.current = THREE.MathUtils.lerp(progressRef.current, targetProgressRef.current, delta * 2.5);
     curve.getPoint(progressRef.current, pathPoint);
-    curve.getPoint(Math.min(progressRef.current + 0.01, 1), lookAtPoint);
-    state.camera.position.lerp(cameraTarget.set(pathPoint.x, 1.8, pathPoint.z), delta * 4);
-    state.camera.lookAt(lookAtPoint.x, 1.8, lookAtPoint.z);
+    curve.getPoint(Math.min(progressRef.current + (isMobile ? 0.015 : 0.01), 1), lookAtPoint);
+
+    const cameraHeight = isMobile ? 2.05 : 1.8;
+    const lookHeight = isMobile ? 1.9 : 1.8;
+    state.camera.position.lerp(cameraTarget.set(pathPoint.x, cameraHeight, pathPoint.z), delta * (isMobile ? 4.5 : 4));
+    state.camera.lookAt(lookAtPoint.x, lookHeight, lookAtPoint.z);
     publishProgress(progressRef.current);
   });
 

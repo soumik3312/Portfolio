@@ -22,6 +22,13 @@ export function CameraProgressProvider({ children }) {
   const targetProgressRef = useRef(0);
   const latestPublishedRef = useRef(0);
   const latestPublishTimeRef = useRef(0);
+  const touchStateRef = useRef({
+    tracking: false,
+    lockedVertical: false,
+    startX: 0,
+    startY: 0,
+    lastY: 0,
+  });
   const [progress, setProgress] = useState(0);
   const [currentSection, setCurrentSection] = useState(journeySections[0]);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -91,6 +98,80 @@ export function CameraProgressProvider({ children }) {
       window.removeEventListener('keydown', handleKey);
     };
   }, [isMobile, setTargetProgress]);
+
+  useEffect(() => {
+    if (!isMobile) return undefined;
+
+    const getInteractiveTarget = (target) => {
+      if (!(target instanceof Element)) return null;
+      return target.closest('button, a, input, textarea, select, .navbar, .section-content-panel');
+    };
+
+    const hasOpenBoard = () =>
+      Boolean(document.querySelector('.section-content-panel.is-board-entering, .section-content-panel.is-board-open, .section-content-panel.is-board-exiting'));
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1 || hasOpenBoard() || getInteractiveTarget(event.target)) {
+        touchStateRef.current.tracking = false;
+        return;
+      }
+
+      const touch = event.touches[0];
+      touchStateRef.current = {
+        tracking: true,
+        lockedVertical: false,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastY: touch.clientY,
+      };
+    };
+
+    const handleTouchMove = (event) => {
+      const state = touchStateRef.current;
+      if (!state.tracking || event.touches.length !== 1) return;
+      if (hasOpenBoard()) {
+        state.tracking = false;
+        return;
+      }
+
+      const touch = event.touches[0];
+      const totalX = touch.clientX - state.startX;
+      const totalY = touch.clientY - state.startY;
+
+      if (!state.lockedVertical) {
+        if (Math.abs(totalX) < 8 && Math.abs(totalY) < 8) return;
+        if (Math.abs(totalX) > Math.abs(totalY)) {
+          state.tracking = false;
+          return;
+        }
+        state.lockedVertical = true;
+      }
+
+      event.preventDefault();
+      const deltaY = state.lastY - touch.clientY;
+      state.lastY = touch.clientY;
+
+      if (Math.abs(deltaY) > 0.35) {
+        setTargetProgress(targetProgressRef.current + deltaY * 0.00125);
+      }
+    };
+
+    const stopTouchTracking = () => {
+      touchStateRef.current.tracking = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    window.addEventListener('touchend', stopTouchTracking, { passive: true });
+    window.addEventListener('touchcancel', stopTouchTracking, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      window.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      window.removeEventListener('touchend', stopTouchTracking);
+      window.removeEventListener('touchcancel', stopTouchTracking);
+    };
+  }, [isMobile, setTargetProgress, targetProgressRef]);
 
   const value = useMemo(
     () => ({

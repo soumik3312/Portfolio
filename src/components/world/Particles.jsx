@@ -194,10 +194,61 @@ const FloatingDust = React.memo(function FloatingDust() {
   return <points geometry={dustGeometry} material={dustMaterial} />;
 });
 
+const CinematicMist = React.memo(function CinematicMist({ mode }) {
+  const isNight = mode === 'night';
+  const mistRefs = useRef([]);
+  const bands = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, index) => ({
+        x: (seededRandom(index + 820) - 0.5) * 18,
+        y: 1.05 + seededRandom(index + 830) * 1.35,
+        z: -18 - index * 27 - seededRandom(index + 840) * 10,
+        width: 18 + seededRandom(index + 850) * 15,
+        height: 2.4 + seededRandom(index + 860) * 2.2,
+        drift: 0.7 + seededRandom(index + 870) * 0.9,
+        phase: seededRandom(index + 880) * Math.PI * 2,
+        rotation: (seededRandom(index + 890) - 0.5) * 0.08,
+      })),
+    [],
+  );
+
+  useFrame((state, delta) => {
+    const time = state.clock.elapsedTime;
+    mistRefs.current.forEach((mesh, index) => {
+      if (!mesh) return;
+      const band = bands[index];
+      mesh.position.x = band.x + Math.sin(time * 0.16 + band.phase) * band.drift;
+      mesh.position.y = band.y + Math.cos(time * 0.11 + band.phase) * 0.12;
+      const pulse = 0.75 + Math.sin(time * 0.38 + band.phase) * 0.18;
+      const targetOpacity = (isNight ? 0.18 : 0.035) * pulse;
+      mesh.material.opacity = THREE.MathUtils.lerp(mesh.material.opacity, targetOpacity, delta * 1.8);
+    });
+  });
+
+  return (
+    <group>
+      {bands.map((band, index) => (
+        <mesh
+          key={`${band.z}-${index}`}
+          ref={(element) => {
+            mistRefs.current[index] = element;
+          }}
+          position={[band.x, band.y, band.z]}
+          rotation={[0, 0, band.rotation]}
+        >
+          <planeGeometry args={[band.width, band.height]} />
+          <meshBasicMaterial color={isNight ? '#cfe7ff' : '#fff8dd'} transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+    </group>
+  );
+});
+
 const Particles = React.memo(function Particles({ mode }) {
   return (
     <group>
       <FloatingDust />
+      <CinematicMist mode={mode} />
       <NightParticles mode={mode} />
     </group>
   );
