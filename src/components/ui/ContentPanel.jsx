@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Download, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Twitter } from 'lucide-react';
+import { ArrowRight, Check, Download, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Twitter, X } from 'lucide-react';
 import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
 import { sendContactMessage } from '../../services/contactMailer';
@@ -29,6 +29,11 @@ const glyphFixes = [
 const displayText = (value) => {
   if (typeof value !== 'string') return value;
   return glyphFixes.reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), value);
+};
+
+const isInteractiveOverlayTarget = (target) => {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .journey-map'));
 };
 
 function DiamondDivider({ compact = false }) {
@@ -835,6 +840,12 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
       const board = contentRef.current;
       if (!board || boardState !== 'board-open') return;
 
+      const scrollable = board.scrollHeight - board.clientHeight > 12;
+      if (!scrollable) {
+        window.requestAnimationFrame(updateScrollState);
+        return;
+      }
+
       const atBottom = board.scrollTop + board.clientHeight >= board.scrollHeight - 10;
       const atTop = board.scrollTop <= 0;
 
@@ -868,6 +879,8 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
     if (!isBoard || boardState === 'walking') return undefined;
 
     const handleWheel = (event) => {
+      if (isInteractiveOverlayTarget(event.target)) return;
+
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation?.();
@@ -884,7 +897,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
     if (!isBoard || boardState === 'walking') return undefined;
 
     const handleTouchStart = (event) => {
-      if (event.touches.length !== 1) {
+      if (event.touches.length !== 1 || isInteractiveOverlayTarget(event.target)) {
         touchScrollRef.current.tracking = false;
         return;
       }
@@ -897,7 +910,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
 
     const handleTouchMove = (event) => {
       const state = touchScrollRef.current;
-      if (!state.tracking || event.touches.length !== 1) return;
+      if (!state.tracking || event.touches.length !== 1 || isInteractiveOverlayTarget(event.target)) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -945,6 +958,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
 
     const handleKeyDown = (event) => {
       if (!(event.key in keyScroll)) return;
+      if (isInteractiveOverlayTarget(event.target)) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -982,6 +996,11 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
             </div>
           ) : null}
           <BoardNails hero={isHero} />
+          {isBoard ? (
+            <button type="button" className="board-close-button" onClick={() => exitBoard?.('forward')} aria-label="Close sign board">
+              <X size={15} />
+            </button>
+          ) : null}
           <div ref={contentRef} className="content-panel-inner" onScroll={updateScrollState}>
             {renderPanel(activeSection)}
             {isBoard ? (

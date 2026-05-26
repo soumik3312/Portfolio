@@ -17,6 +17,11 @@ const isMobileViewport = () => {
   return window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches;
 };
 
+const isInteractiveJourneyTarget = (target) => {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .navbar, .section-content-panel, .journey-map'));
+};
+
 export function CameraProgressProvider({ children }) {
   const progressRef = useRef(0);
   const targetProgressRef = useRef(0);
@@ -70,7 +75,7 @@ export function CameraProgressProvider({ children }) {
     if (isMobile) return undefined;
 
     const handleWheel = (event) => {
-      if (event.target instanceof Element && event.target.closest('.content-panel')) {
+      if (isInteractiveJourneyTarget(event.target) || (event.target instanceof Element && event.target.closest('.content-panel'))) {
         return;
       }
 
@@ -79,6 +84,8 @@ export function CameraProgressProvider({ children }) {
     };
 
     const handleKey = (event) => {
+      if (isInteractiveJourneyTarget(event.target)) return;
+
       if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
         event.preventDefault();
         setTargetProgress(targetProgressRef.current + 0.04);
@@ -102,16 +109,11 @@ export function CameraProgressProvider({ children }) {
   useEffect(() => {
     if (!isMobile) return undefined;
 
-    const getInteractiveTarget = (target) => {
-      if (!(target instanceof Element)) return null;
-      return target.closest('button, a, input, textarea, select, .navbar, .section-content-panel');
-    };
-
     const hasOpenBoard = () =>
       Boolean(document.querySelector('.section-content-panel.is-board-entering, .section-content-panel.is-board-open, .section-content-panel.is-board-exiting'));
 
     const handleTouchStart = (event) => {
-      if (event.touches.length !== 1 || hasOpenBoard() || getInteractiveTarget(event.target)) {
+      if (event.touches.length !== 1 || hasOpenBoard() || isInteractiveJourneyTarget(event.target)) {
         touchStateRef.current.tracking = false;
         return;
       }

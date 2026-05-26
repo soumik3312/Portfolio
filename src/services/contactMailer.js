@@ -25,6 +25,8 @@ export function createContactMailto(form, source = 'Portfolio contact form') {
 
 export async function sendContactMessage(form, source = 'Portfolio contact form') {
   const submittedAt = new Date().toISOString();
+  const recipientEmail = portfolioData.contact.email;
+  const subject = `Portfolio inquiry from ${form.name || 'visitor'}`;
   const payload = {
     name: form.name,
     email: form.email,
@@ -32,20 +34,36 @@ export async function sendContactMessage(form, source = 'Portfolio contact form'
     message: form.message,
     from_name: form.name,
     from_email: form.email,
+    user_name: form.name,
+    user_email: form.email,
+    user_message: form.message,
     reply_to: form.email,
-    to_email: portfolioData.contact.email,
-    subject: `Portfolio inquiry from ${form.name || 'visitor'}`,
+    to_name: portfolioData.personal.displayName,
+    to_email: recipientEmail,
+    recipient_email: recipientEmail,
+    destination_email: recipientEmail,
+    subject,
+    title: subject,
     source,
     submitted_at: submittedAt,
+    time: submittedAt,
   };
 
   const emailJsServiceId = env.VITE_EMAILJS_SERVICE_ID;
   const emailJsTemplateId = env.VITE_EMAILJS_TEMPLATE_ID;
   const emailJsPublicKey = env.VITE_EMAILJS_PUBLIC_KEY;
+  let emailJsError = null;
 
   if (hasRealValue(emailJsServiceId) && hasRealValue(emailJsTemplateId) && hasRealValue(emailJsPublicKey)) {
-    await emailjs.send(emailJsServiceId, emailJsTemplateId, payload, { publicKey: emailJsPublicKey });
-    return { status: 'success', provider: 'emailjs' };
+    try {
+      const response = await emailjs.send(emailJsServiceId, emailJsTemplateId, payload, { publicKey: emailJsPublicKey });
+      if (response?.status && response.status >= 400) {
+        throw new Error(response.text || 'EmailJS rejected the message.');
+      }
+      return { status: 'success', provider: 'emailjs', responseStatus: response?.status || 200 };
+    } catch (error) {
+      emailJsError = error;
+    }
   }
 
   const formspreeEndpoint = env.VITE_FORMSPREE_ENDPOINT || portfolioData.contact.formspreeEndpoint;
@@ -62,6 +80,8 @@ export async function sendContactMessage(form, source = 'Portfolio contact form'
     if (!response.ok) throw new Error('Contact endpoint rejected the message.');
     return { status: 'success', provider: 'formspree' };
   }
+
+  if (emailJsError) throw emailJsError;
 
   return {
     status: 'fallback',

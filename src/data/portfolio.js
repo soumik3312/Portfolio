@@ -421,7 +421,7 @@ export const portfolioData = {
     url: 'https://github.com/soumik3312',
     stats: {
       commits: '250+',
-      repos: '12+',
+      repos: '20+',
       languages: '8+',
       stars: '20+',
     },
