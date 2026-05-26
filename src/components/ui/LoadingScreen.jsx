@@ -7,11 +7,14 @@ const LoadingScreen = React.memo(function LoadingScreen({ visible }) {
     <AnimatePresence>
       {visible ? (
         <motion.div className="loading-screen" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.55, ease: 'easeOut' }}>
-          <div>
+          <div className="loading-card">
+            <span className="loading-kicker">Initializing trail</span>
             <h1>{portfolio.person.displayName}</h1>
+            <p>welcome to my world</p>
             <span>
               <i />
             </span>
+            <small>Teleporting....</small>
           </div>
         </motion.div>
       ) : null}

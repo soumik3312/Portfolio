@@ -8,57 +8,57 @@ const stopIntel = {
     terrain: 'Spawn Ridge',
     detail: 'Entry point with the headline, quick identity, resume path, and first jump into the portfolio trail.',
     loot: 'Intro, role, resume',
-    x: '10%',
-    y: '76%',
+    x: '8%',
+    y: '68%',
   },
   about: {
     terrain: 'Pine Clearing',
     detail: 'Personal background, education, current focus, and the builder story behind the work.',
     loot: 'Bio, education, goals',
-    x: '23%',
-    y: '64%',
+    x: '20%',
+    y: '68%',
   },
   skills: {
     terrain: 'Tool Forge',
     detail: 'Flutter, AI/ML, backend, database, and platform skills grouped by practical build areas.',
     loot: 'Tech stack, tools',
-    x: '36%',
-    y: '55%',
+    x: '32%',
+    y: '68%',
   },
   projects: {
     terrain: 'Build Quarry',
     detail: 'Shipped product work with problems, solutions, features, results, and repository links.',
     loot: 'Case studies, repos',
-    x: '50%',
-    y: '43%',
+    x: '44%',
+    y: '68%',
   },
   ai: {
     terrain: 'Signal Tower',
     detail: 'Applied AI systems, NLP workflows, assistant architecture, metrics, and model notes.',
     loot: 'AI systems, metrics',
-    x: '64%',
-    y: '34%',
+    x: '56%',
+    y: '68%',
   },
   timeline: {
     terrain: 'Milestone Pass',
     detail: 'The journey route through projects, internship leadership, certifications, achievements, and hackathons.',
     loot: 'Timeline, awards',
-    x: '76%',
-    y: '25%',
+    x: '68%',
+    y: '68%',
   },
   github: {
     terrain: 'Repo Camp',
     detail: 'GitHub activity, public repository count, language spread, stars, and pinned project highlights.',
     loot: 'Stats, pinned repos',
-    x: '87%',
-    y: '38%',
+    x: '80%',
+    y: '68%',
   },
   contact: {
     terrain: 'Beacon Cliff',
     detail: 'Contact form, direct channels, social links, location details, and availability.',
     loot: 'Email, phone, socials',
     x: '92%',
-    y: '16%',
+    y: '68%',
   },
 };
 
@@ -70,12 +70,13 @@ const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, o
   const activePercent = (activeIndex / (journeySections.length - 1)) * 100;
 
   const toggleMap = () => {
-    onSound?.('map');
+    onSound?.(expanded ? 'close' : 'map');
     setExpanded((current) => !current);
   };
 
   const goToStop = (sectionId) => {
     onNavigate?.(sectionId);
+    onSound?.('select');
     setExpanded(false);
   };
 

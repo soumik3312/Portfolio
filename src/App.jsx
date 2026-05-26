@@ -11,7 +11,6 @@ import { usePanelSystem } from './components/ui/PanelController';
 import ProgressBar from './components/ui/ProgressBar';
 import ProgressDots from './components/ui/ProgressDots';
 import ScrollHint from './components/ui/ScrollHint';
-import SectionLabel from './components/ui/SectionLabel';
 import { CameraProgressProvider, useCameraProgress } from './hooks/useCameraProgress';
 import { useDayNight } from './hooks/useDayNight';
 import { useSound } from './hooks/useSound';
@@ -53,10 +52,9 @@ function MountainJourney() {
       <ProgressBar />
       <div className={`world-board-overlay ${isBoardVisible ? 'is-visible' : ''}`} />
       <Navbar activeSection={activeNavSection} mode={mode} onToggleMode={handleToggleMode} soundEnabled={soundEnabled} onToggleSound={toggleSound} onNavigate={handleNavigate} />
-      <ContentPanel activeSection={activeSection} boardState={boardState} exitBoard={exitBoard} />
+      <ContentPanel activeSection={activeSection} boardState={boardState} exitBoard={exitBoard} onSound={play} />
       <JourneyMap activeSection={activeNavSection} boardState={boardState} onNavigate={handleNavigate} onSound={play} />
       <ProgressDots activeSection={activeNavSection} />
-      <SectionLabel />
       <ScrollHint />
       <MinecraftPOVOverlay />
       <MobileBanner />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Download, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Twitter, X } from 'lucide-react';
+import { ArrowRight, Check, Download, ExternalLink, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Terminal, Twitter, X } from 'lucide-react';
 import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
 import { sendContactMessage } from '../../services/contactMailer';
@@ -99,16 +100,60 @@ function BoardNails({ hero = false }) {
   return nails.map((position) => <span key={position} className={`board-nail board-nail--${position}`} aria-hidden="true" />);
 }
 
-function HeroPanel() {
+function HeroPanel({ onSound }) {
+  const [photoOpen, setPhotoOpen] = useState(false);
   const { setTargetProgress } = useCameraProgress();
   const data = portfolioData.personal;
   const [firstName, ...lastNameParts] = data.name.split(' ');
+  const openPhoto = () => {
+    onSound?.('profile');
+    setPhotoOpen(true);
+  };
+  const closePhoto = () => {
+    onSound?.('close');
+    setPhotoOpen(false);
+  };
 
   return (
     <div className="hero-panel-content">
       <figure className="hero-panel-photo">
-        <img src={portfolioAssets.photo} alt={data.name} />
+        <button type="button" onClick={openPhoto} aria-label="Open profile photo">
+          <img src={portfolioAssets.photo} alt={data.name} />
+        </button>
       </figure>
+      {typeof document !== 'undefined'
+        ? createPortal(
+            <AnimatePresence>
+              {photoOpen ? (
+                <motion.div
+                  className="profile-photo-lightbox"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Profile photo"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <button type="button" className="profile-photo-backdrop" onClick={closePhoto} aria-label="Close profile photo" />
+                  <motion.figure
+                    initial={{ opacity: 0, y: 20, scale: 0.94 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <button type="button" className="profile-photo-close" onClick={closePhoto} aria-label="Close profile photo">
+                      <X size={18} />
+                    </button>
+                    <img src={portfolioAssets.photo} alt={data.name} />
+                    <figcaption>{data.name}</figcaption>
+                  </motion.figure>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
       <DiamondDivider compact />
       <span className="hero-panel-label">B.Tech CSE (AIML) · Open to Opportunities</span>
       <h1>
@@ -125,7 +170,13 @@ function HeroPanel() {
         {displayText(data.availability)}
       </div>
       <div className="hero-panel-actions">
-        <button type="button" onClick={() => setTargetProgress(sectionTValues.about)}>
+        <button
+          type="button"
+          onClick={() => {
+            onSound?.('select');
+            setTargetProgress(sectionTValues.about);
+          }}
+        >
           View My Work
           <ArrowRight size={15} />
         </button>
@@ -586,6 +637,20 @@ function GitHubPanel() {
   return (
     <>
       <PanelHeader section="github" />
+      <section className="github-command-card">
+        <div>
+          <span>
+            <Terminal size={13} />
+            developer terminal
+          </span>
+          <h3>@{portfolioData.github.username}</h3>
+          <p>Public builds, experiments, AI tooling, Flutter apps, backend systems, and product code behind the portfolio.</p>
+        </div>
+        <a href={portfolioData.github.url} target="_blank" rel="noreferrer">
+          Open GitHub
+          <ExternalLink size={14} />
+        </a>
+      </section>
       <div className="github-stat-grid">
         {stats.map(([value, label]) => (
           <section key={label}>
@@ -596,7 +661,10 @@ function GitHubPanel() {
       </div>
       <PanelDivider />
       <section className="github-heatmap-block">
-        <h3>Contribution Activity</h3>
+        <div className="github-section-heading">
+          <h3>Contribution Activity</h3>
+          <span>year view</span>
+        </div>
         <div className="github-heatmap">
           {cells.map((cell, index) => (
             <motion.span
@@ -608,11 +676,22 @@ function GitHubPanel() {
             />
           ))}
         </div>
+        <div className="github-heatmap-legend" aria-hidden="true">
+          <span>Less</span>
+          {[0, 1, 2, 3, 4].map((level) => (
+            <i key={level} data-level={level} />
+          ))}
+          <span>More</span>
+        </div>
       </section>
       <PanelDivider />
+      <div className="github-section-heading">
+        <h3>Pinned Repositories</h3>
+        <span>flagship codebases</span>
+      </div>
       <div className="pinned-repos">
         {portfolioData.github.pinned.map((repo) => (
-          <article key={repo.name}>
+          <a key={repo.name} href={repo.url} target="_blank" rel="noreferrer">
             <div>
               <h3>
                 <Github size={15} />
@@ -630,15 +709,19 @@ function GitHubPanel() {
                 <GitFork size={13} />
                 {repo.forks}
               </span>
+              <span>
+                <ExternalLink size={13} />
+                View
+              </span>
             </footer>
-          </article>
+          </a>
         ))}
       </div>
     </>
   );
 }
 
-function ContactPanel() {
+function ContactPanel({ onSound }) {
   const [status, setStatus] = useState('idle');
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const firstName = portfolioData.personal.name.split(' ')[0];
@@ -650,6 +733,7 @@ function ContactPanel() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    onSound?.('submit');
     setStatus('sending');
 
     try {
@@ -661,8 +745,10 @@ function ContactPanel() {
       }
 
       setStatus('sent');
+      onSound?.('success');
       setForm({ name: '', email: '', message: '' });
     } catch {
+      onSound?.('error');
       setStatus('error');
     }
   };
@@ -753,15 +839,15 @@ function ContactPanel() {
   );
 }
 
-function renderPanel(section) {
-  if (section === 'hero') return <HeroPanel />;
+function renderPanel(section, onSound) {
+  if (section === 'hero') return <HeroPanel onSound={onSound} />;
   if (section === 'about') return <AboutPanel />;
   if (section === 'skills') return <SkillsPanel />;
   if (section === 'projects') return <ProjectsPanel />;
   if (section === 'ai') return <AIPanel />;
   if (section === 'timeline') return <TimelinePanel />;
   if (section === 'github') return <GitHubPanel />;
-  if (section === 'contact') return <ContactPanel />;
+  if (section === 'contact') return <ContactPanel onSound={onSound} />;
   return null;
 }
 
@@ -812,7 +898,7 @@ const heroVariants = (delay) => ({
 
 export { DiamondDivider };
 
-export default function ContentPanel({ activeSection, boardState = 'walking', exitBoard }) {
+export default function ContentPanel({ activeSection, boardState = 'walking', exitBoard, onSound }) {
   const isHero = activeSection === 'hero';
   const isBoard = Boolean(activeSection && !isHero);
   const shouldShowPanel = Boolean(activeSection && (isHero || boardState !== 'walking'));
@@ -997,12 +1083,20 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
           ) : null}
           <BoardNails hero={isHero} />
           {isBoard ? (
-            <button type="button" className="board-close-button" onClick={() => exitBoard?.('forward')} aria-label="Close sign board">
+            <button
+              type="button"
+              className="board-close-button"
+              onClick={() => {
+                onSound?.('close');
+                exitBoard?.('forward');
+              }}
+              aria-label="Close sign board"
+            >
               <X size={15} />
             </button>
           ) : null}
           <div ref={contentRef} className="content-panel-inner" onScroll={updateScrollState}>
-            {renderPanel(activeSection)}
+            {renderPanel(activeSection, onSound)}
             {isBoard ? (
               <>
                 <DiamondDivider />
