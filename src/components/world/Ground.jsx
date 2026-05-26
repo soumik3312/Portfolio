@@ -31,7 +31,7 @@ const Ground = React.memo(function Ground({ mode }) {
   const mainMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#4a7c3f' : '#1a2d1a',
+        color: isDay ? '#4a7c3f' : '#355d34',
         roughness: 0.95,
         metalness: 0,
       }),
@@ -41,23 +41,23 @@ const Ground = React.memo(function Ground({ mode }) {
   const patchMaterials = useMemo(
     () => [
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#3d6b35' : '#132413',
+        color: isDay ? '#3d6b35' : '#2b4f2d',
         transparent: true,
-        opacity: isDay ? 0.72 : 0.52,
+        opacity: isDay ? 0.72 : 0.62,
         roughness: 0.98,
         metalness: 0,
       }),
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#5a9048' : '#203b20',
+        color: isDay ? '#5a9048' : '#416b3a',
         transparent: true,
-        opacity: isDay ? 0.66 : 0.48,
+        opacity: isDay ? 0.66 : 0.6,
         roughness: 0.98,
         metalness: 0,
       }),
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#4a7c3f' : '#1a2d1a',
+        color: isDay ? '#4a7c3f' : '#355d34',
         transparent: true,
-        opacity: isDay ? 0.74 : 0.5,
+        opacity: isDay ? 0.74 : 0.62,
         roughness: 0.98,
         metalness: 0,
       }),
@@ -68,7 +68,7 @@ const Ground = React.memo(function Ground({ mode }) {
   const stoneMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#ffffff' : '#4f5562',
+        color: isDay ? '#ffffff' : '#8b9098',
         roughness: 0.9,
         metalness: 0,
         vertexColors: isDay,
@@ -79,7 +79,7 @@ const Ground = React.memo(function Ground({ mode }) {
   const pebbleMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#8a8078' : '#4c5058',
+        color: isDay ? '#8a8078' : '#7d7f82',
         roughness: 0.92,
         metalness: 0,
       }),
@@ -89,7 +89,7 @@ const Ground = React.memo(function Ground({ mode }) {
   const grassMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#6db35d' : '#233f23',
+        color: isDay ? '#6db35d' : '#4c7a43',
         roughness: 1,
         metalness: 0,
       }),

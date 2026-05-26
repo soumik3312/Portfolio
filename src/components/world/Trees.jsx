@@ -36,7 +36,7 @@ const Trees = React.memo(function Trees({ mode }) {
   const trunkMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#5c3d1e' : '#21190f',
+        color: isDay ? '#5c3d1e' : '#4a3320',
         roughness: 0.95,
         metalness: 0,
       }),
@@ -46,7 +46,7 @@ const Trees = React.memo(function Trees({ mode }) {
   const foliageMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#2d5a1b' : '#0d1f0d',
+        color: isDay ? '#2d5a1b' : '#24532b',
         roughness: 0.92,
         metalness: 0,
       }),

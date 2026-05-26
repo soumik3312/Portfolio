@@ -78,13 +78,13 @@ const River = React.memo(function River({ mode }) {
   const waterMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#2196a8' : '#0d3d4a',
-        emissive: isDay ? '#0a4350' : '#061b26',
-        emissiveIntensity: 0.05,
+        color: isDay ? '#2196a8' : '#2f7d91',
+        emissive: isDay ? '#0a4350' : '#1a6072',
+        emissiveIntensity: isDay ? 0.05 : 0.18,
         roughness: 0.1,
         metalness: 0.3,
         transparent: true,
-        opacity: isDay ? 0.85 : 0.72,
+        opacity: isDay ? 0.85 : 0.82,
       }),
     [isDay],
   );
@@ -92,11 +92,11 @@ const River = React.memo(function River({ mode }) {
   const bankMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#3f7936' : '#112511',
+        color: isDay ? '#3f7936' : '#315436',
         roughness: 0.96,
         metalness: 0,
         transparent: true,
-        opacity: isDay ? 0.8 : 0.72,
+        opacity: isDay ? 0.8 : 0.78,
       }),
     [isDay],
   );
@@ -104,11 +104,11 @@ const River = React.memo(function River({ mode }) {
   const outerBankMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#4a7c3f' : '#1a2d1a',
+        color: isDay ? '#4a7c3f' : '#3b6040',
         roughness: 0.98,
         metalness: 0,
         transparent: true,
-        opacity: isDay ? 0.62 : 0.5,
+        opacity: isDay ? 0.62 : 0.62,
       }),
     [isDay],
   );
@@ -116,7 +116,7 @@ const River = React.memo(function River({ mode }) {
   const rockMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#8a8a8a' : '#565c66',
+        color: isDay ? '#8a8a8a' : '#858c94',
         roughness: 0.9,
         metalness: 0,
       }),
@@ -154,10 +154,10 @@ const River = React.memo(function River({ mode }) {
   useFrame((state) => {
     if (!waterMaterial) return;
     const time = state.clock.elapsedTime;
-    const baseOpacity = isDay ? 0.82 : 0.68;
+    const baseOpacity = isDay ? 0.82 : 0.78;
     waterMaterial.opacity = baseOpacity + Math.sin(time * 0.5) * 0.05;
-    waterMaterial.emissive.setHSL(0.55, 0.8, 0.05 + Math.sin(time * 2) * 0.02);
-    waterMaterial.color.setHSL(0.52 + Math.sin(time * 0.5) * 0.02, 0.7, isDay ? 0.45 : 0.24);
+    waterMaterial.emissive.setHSL(0.55, 0.8, (isDay ? 0.05 : 0.16) + Math.sin(time * 2) * 0.025);
+    waterMaterial.color.setHSL(0.52 + Math.sin(time * 0.5) * 0.02, 0.7, isDay ? 0.45 : 0.38);
   });
 
   return (

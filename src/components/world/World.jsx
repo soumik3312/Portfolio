@@ -3,13 +3,16 @@ import { Canvas } from '@react-three/fiber';
 import { AdaptiveDpr, AdaptiveEvents } from '@react-three/drei';
 import CameraController from '../camera/CameraController';
 import Ground from './Ground';
+import MinecraftChest from './MinecraftChest';
 import Mountains from './Mountains';
 import Particles from './Particles';
 import River from './River';
 import Rocks from './Rocks';
 import Signboard from './Signboard';
 import Sky from './Sky';
+import StreetLights from './StreetLights';
 import Trees from './Trees';
+import VoxelDetails from './VoxelDetails';
 
 const signboards = [
   { id: 'about', sectionName: 'About Me', position: [4.7, 0, -36], rotation: [0, -0.15, 0] },
@@ -25,9 +28,10 @@ const Lights = React.memo(function Lights({ mode }) {
   const isDay = mode === 'day';
   return (
     <>
-      <ambientLight color={isDay ? '#d8efe0' : '#66789a'} intensity={isDay ? 1.2 : 0.48} />
-      <directionalLight position={isDay ? [24, 35, 18] : [-18, 26, 14]} color={isDay ? '#fff5d6' : '#c8dcff'} intensity={isDay ? 2.1 : 0.82} />
-      <hemisphereLight color={isDay ? '#bfe8ff' : '#263b68'} groundColor={isDay ? '#5f8d4f' : '#0b160d'} intensity={isDay ? 0.62 : 0.24} />
+      <ambientLight color={isDay ? '#d8efe0' : '#c7d5ec'} intensity={isDay ? 1.2 : 1.62} />
+      <directionalLight position={isDay ? [24, 35, 18] : [-18, 26, 14]} color={isDay ? '#fff5d6' : '#f2f8ff'} intensity={isDay ? 2.1 : 1.24} />
+      <hemisphereLight color={isDay ? '#bfe8ff' : '#7594b8'} groundColor={isDay ? '#5f8d4f' : '#8a6640'} intensity={isDay ? 0.62 : 1.18} />
+      {!isDay ? <ambientLight color="#ffe1a0" intensity={0.62} /> : null}
     </>
   );
 });
@@ -35,7 +39,7 @@ const Lights = React.memo(function Lights({ mode }) {
 const SceneContent = React.memo(function SceneContent({ mode }) {
   return (
     <>
-      <fog attach="fog" args={[mode === 'day' ? '#c8e8d4' : '#2a3a5a', 80, 250]} />
+      <fog attach="fog" args={[mode === 'day' ? '#c8e8d4' : '#6b819b', mode === 'day' ? 95 : 150, mode === 'day' ? 285 : 360]} />
       <CameraController />
       <Lights mode={mode} />
       <Sky mode={mode} />
@@ -43,10 +47,15 @@ const SceneContent = React.memo(function SceneContent({ mode }) {
       <River mode={mode} />
       <Mountains mode={mode} />
       <Trees mode={mode} />
+      <VoxelDetails mode={mode} />
       <Rocks mode={mode} />
+      <StreetLights mode={mode} />
       <Particles mode={mode} />
       {signboards.map((board) => (
-        <Signboard key={board.id} sectionName={board.sectionName} position={board.position} rotation={board.rotation} />
+        <React.Fragment key={board.id}>
+          <Signboard sectionName={board.sectionName} position={board.position} rotation={board.rotation} mode={mode} />
+          <MinecraftChest sectionId={board.id} position={[board.position[0] * 0.92, 0.16, board.position[2] + 2.1]} rotation={board.rotation} mode={mode} />
+        </React.Fragment>
       ))}
     </>
   );

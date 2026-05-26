@@ -3,6 +3,7 @@ import World from './components/world/World';
 import MobileSections from './components/sections/MobileSections';
 import ContentPanel from './components/ui/ContentPanel';
 import LoadingScreen from './components/ui/LoadingScreen';
+import MinecraftPOVOverlay from './components/ui/MinecraftPOVOverlay';
 import MobileBanner from './components/ui/MobileBanner';
 import Navbar from './components/ui/Navbar';
 import { usePanelSystem } from './components/ui/PanelController';
@@ -35,6 +36,7 @@ function MountainJourney() {
       <ProgressDots activeSection={activeNavSection} />
       <SectionLabel />
       <ScrollHint />
+      <MinecraftPOVOverlay />
       <MobileBanner />
       <MobileSections />
     </div>

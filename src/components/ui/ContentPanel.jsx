@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Download, GitFork, Github, Linkedin, Mail, Send, Star } from 'lucide-react';
+import { ArrowRight, Check, Download, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Twitter } from 'lucide-react';
 import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
+import { sendContactMessage } from '../../services/contactMailer';
 
 const panelHeaders = {
   about: { label: '01 ◆ ABOUT ME', heading: 'More Than Just a Developer' },
@@ -59,6 +60,33 @@ function PanelHeader({ section }) {
 
 function Tag({ children }) {
   return <span className="panel-tag">{displayText(children)}</span>;
+}
+
+function DetailCard({ eyebrow, title, children, href }) {
+  const content = (
+    <>
+      {eyebrow ? <span>{displayText(eyebrow)}</span> : null}
+      <h3>{displayText(title)}</h3>
+      {children}
+    </>
+  );
+
+  if (!href) return <article className="panel-detail-card">{content}</article>;
+  return (
+    <a className="panel-detail-card is-link" href={href} target="_blank" rel="noreferrer">
+      {content}
+    </a>
+  );
+}
+
+function DetailList({ items }) {
+  return (
+    <ul className="panel-detail-list">
+      {items.map((item) => (
+        <li key={item}>{displayText(item)}</li>
+      ))}
+    </ul>
+  );
 }
 
 function BoardNails({ hero = false }) {
@@ -148,6 +176,9 @@ function AboutPanel() {
           </p>
         ))}
       </div>
+      <DetailCard eyebrow="What Makes Me Different" title="Complete Systems, Not Just Screens">
+        <p>{displayText(portfolioData.about.difference)}</p>
+      </DetailCard>
       <div className="detail-pills">
         <Tag>{data.degree}</Tag>
         <Tag>{data.location}</Tag>
@@ -162,6 +193,82 @@ function AboutPanel() {
             <span>{displayText(label)}</span>
           </section>
         ))}
+      </div>
+      <PanelDivider />
+      <div className="panel-detail-grid">
+        <DetailCard eyebrow="Current Focus" title="What I Am Sharpening">
+          <p>{displayText(portfolioData.about.currentFocus)}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Learning" title="Next Technical Layer">
+          <p>{displayText(portfolioData.about.currentlyLearning)}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Building" title="Current Products">
+          <p>{displayText(portfolioData.about.currentlyBuilding)}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Goal" title="Career Direction">
+          <p>{displayText(portfolioData.about.careerGoal)}</p>
+        </DetailCard>
+      </div>
+      <PanelDivider />
+      <div className="panel-detail-stack">
+        <h3 className="panel-section-title">Education</h3>
+        {portfolioData.education.map((item) => (
+          <DetailCard key={item.institution} eyebrow={`${item.period} · ${item.location}`} title={item.institution}>
+            <p>{displayText([item.degree, item.specialization, item.score].filter(Boolean).join(' · '))}</p>
+            <p>{displayText(item.description)}</p>
+          </DetailCard>
+        ))}
+      </div>
+      <PanelDivider />
+      <div className="panel-detail-stack">
+        <h3 className="panel-section-title">Experience & Leadership</h3>
+        {portfolioData.experience.map((item) => (
+          <DetailCard key={item.company} eyebrow={`${item.duration} · ${item.location}`} title={`${item.role} — ${item.company}`}>
+            <p>{displayText(item.summary)}</p>
+            <strong>Responsibilities</strong>
+            <DetailList items={item.responsibilities} />
+            <strong>Achievements</strong>
+            <DetailList items={item.achievements} />
+            <strong>Technologies</strong>
+            <div className="panel-tech-row">
+              {item.technologies.map((tech) => (
+                <Tag key={tech}>{tech}</Tag>
+              ))}
+            </div>
+            <strong>Impact</strong>
+            <DetailList items={item.impact} />
+          </DetailCard>
+        ))}
+      </div>
+      <PanelDivider />
+      <DetailCard eyebrow="Fun Fact" title="The Iron Man Thread">
+        <p>{displayText(portfolioData.about.funFact)}</p>
+      </DetailCard>
+      <PanelDivider />
+      <div className="panel-detail-grid">
+        <DetailCard eyebrow="Hobbies" title="Music">
+          <p>{displayText(portfolioData.personality.hobbies)}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Interests" title="What Pulls My Curiosity">
+          <DetailList items={portfolioData.personality.interests} />
+        </DetailCard>
+        <DetailCard eyebrow="Favorites" title="Technologies">
+          <div className="panel-tech-row">
+            {portfolioData.personality.favoriteTechnologies.map((tech) => (
+              <Tag key={tech}>{tech}</Tag>
+            ))}
+          </div>
+        </DetailCard>
+        <DetailCard eyebrow="Personal" title="Languages & Dream Role">
+          <p>{portfolioData.personality.languages.join(', ')}</p>
+          <p>{displayText(portfolioData.personality.dreamRole)}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Book" title={portfolioData.personality.favoriteBook}>
+          <p>Favorite creator: {portfolioData.personality.favoriteCreator}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Future Goals" title="Scale The Impact">
+          <p>{displayText(portfolioData.personality.futureGoals)}</p>
+        </DetailCard>
       </div>
     </>
   );
@@ -189,6 +296,12 @@ function SkillsPanel() {
       <SkillGroup title="AI & MACHINE LEARNING" skills={portfolioData.skills.aiml} />
       <PanelDivider />
       <SkillGroup title="FULL STACK & BACKEND" skills={portfolioData.skills.fullstack} />
+      <PanelDivider />
+      <SkillGroup title="DATABASES" skills={portfolioData.skills.databases} />
+      <PanelDivider />
+      <SkillGroup title="PROGRAMMING LANGUAGES" skills={portfolioData.skills.languages} />
+      <PanelDivider />
+      <SkillGroup title="TOOLS & PLATFORMS" skills={portfolioData.skills.tools} />
     </>
   );
 }
@@ -226,6 +339,43 @@ function ProjectsPanel() {
             </div>
             <h3>{displayText(project.name)}</h3>
             <p>{displayText(project.description)}</p>
+            <div className="panel-project-meta">
+              <Tag>{project.role}</Tag>
+              <Tag>{project.duration}</Tag>
+              {project.teamSize ? <Tag>Team Size: {project.teamSize}</Tag> : null}
+            </div>
+            <div className="project-detail-stack">
+              <p>
+                <strong>Problem:</strong> {displayText(project.problem)}
+              </p>
+              <p>
+                <strong>Solution:</strong> {displayText(project.solution)}
+              </p>
+            </div>
+            {project.features?.length ? (
+              <div className="project-detail-stack">
+                <strong>Core Features</strong>
+                <DetailList items={project.features} />
+              </div>
+            ) : null}
+            {project.challenges?.length ? (
+              <div className="project-detail-stack">
+                <strong>Technical Challenges</strong>
+                <DetailList items={project.challenges} />
+              </div>
+            ) : null}
+            {project.results?.length ? (
+              <div className="project-detail-stack">
+                <strong>Results</strong>
+                <DetailList items={project.results} />
+              </div>
+            ) : null}
+            {project.futureScope?.length ? (
+              <div className="project-detail-stack">
+                <strong>Future Scope</strong>
+                <DetailList items={project.futureScope} />
+              </div>
+            ) : null}
             <div className="panel-tech-row">
               {project.tech.map((tech) => (
                 <Tag key={tech}>{tech}</Tag>
@@ -312,6 +462,20 @@ function AIPanel() {
               ))}
             </div>
           </div>
+          {project.aiDetails ? (
+            <div className="project-detail-stack">
+              <strong>AI Details</strong>
+              <p>Dataset: {displayText(project.aiDetails.dataset)}</p>
+              {project.aiDetails.datasetSize ? <p>Dataset Size: {displayText(project.aiDetails.datasetSize)}</p> : null}
+              <p>Model: {displayText(project.aiDetails.model)}</p>
+              <p>Training Time: {displayText(project.aiDetails.trainingTime)}</p>
+              <div className="panel-tech-row">
+                {project.aiDetails.frameworks.map((framework) => (
+                  <Tag key={framework}>{framework}</Tag>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </article>
       ))}
       <PanelDivider />
@@ -347,6 +511,39 @@ function TimelinePanel() {
           </motion.article>
         ))}
       </motion.div>
+      <PanelDivider />
+      <div className="panel-detail-stack">
+        <h3 className="panel-section-title">Certifications</h3>
+        {portfolioData.certifications.map((certification) => (
+          <DetailCard
+            key={certification.name}
+            eyebrow={`${certification.issuer} · ${certification.year}`}
+            title={certification.name}
+            href={certification.credential}
+          >
+            <p>{displayText(certification.description)}</p>
+          </DetailCard>
+        ))}
+      </div>
+      <PanelDivider />
+      <div className="panel-detail-stack">
+        <h3 className="panel-section-title">Achievements</h3>
+        {portfolioData.achievements.map((achievement) => (
+          <DetailCard key={achievement.title} eyebrow={achievement.year} title={achievement.title}>
+            <p>{displayText(achievement.description)}</p>
+          </DetailCard>
+        ))}
+      </div>
+      <PanelDivider />
+      <div className="panel-detail-stack">
+        <h3 className="panel-section-title">Hackathons</h3>
+        {portfolioData.hackathons.map((hackathon) => (
+          <DetailCard key={hackathon.name} eyebrow={`${hackathon.year} · ${hackathon.achievement}`} title={hackathon.name}>
+            <p>{displayText(hackathon.theme)}</p>
+            <p>{displayText(hackathon.description)}</p>
+          </DetailCard>
+        ))}
+      </div>
     </>
   );
 }
@@ -427,12 +624,31 @@ function GitHubPanel() {
 
 function ContactPanel() {
   const [status, setStatus] = useState('idle');
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
   const firstName = portfolioData.personal.name.split(' ')[0];
 
-  const handleSubmit = (event) => {
+  const updateForm = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setStatus('sending');
-    window.setTimeout(() => setStatus('sent'), 700);
+
+    try {
+      const result = await sendContactMessage(form, 'Wooden board contact form');
+      if (result.status === 'fallback') {
+        window.location.href = result.fallbackUrl;
+        setStatus('fallback');
+        return;
+      }
+
+      setStatus('sent');
+      setForm({ name: '', email: '', message: '' });
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -442,15 +658,15 @@ function ContactPanel() {
       <form className="contact-form" onSubmit={handleSubmit}>
         <label>
           Your name
-          <input type="text" placeholder={`${firstName}'s future teammate`} required />
+          <input name="name" type="text" value={form.name} onChange={updateForm} placeholder={`${firstName}'s future teammate`} required />
         </label>
         <label>
           Your email
-          <input type="email" placeholder="you@company.com" required />
+          <input name="email" type="email" value={form.email} onChange={updateForm} placeholder="you@company.com" required />
         </label>
         <label>
           Message
-          <textarea placeholder="Tell me what we are building..." required />
+          <textarea name="message" value={form.message} onChange={updateForm} placeholder="Tell me what we are building..." required />
         </label>
         <button type="submit" disabled={status === 'sending'}>
           {status === 'sending' ? (
@@ -467,6 +683,11 @@ function ContactPanel() {
             </>
           )}
         </button>
+        <p className={`contact-form-status is-${status}`} role="status">
+          {status === 'sent' ? 'Message sent directly to my inbox.' : null}
+          {status === 'fallback' ? 'Direct email service is not configured yet. Opening your email client instead.' : null}
+          {status === 'error' ? 'Message failed. Please use one of the direct channels below.' : null}
+        </p>
       </form>
       <PanelDivider />
       <section className="direct-channels">
@@ -474,6 +695,10 @@ function ContactPanel() {
         <a href={`mailto:${portfolioData.contact.email}`}>
           <Mail size={15} />
           {portfolioData.contact.email}
+        </a>
+        <a href={`tel:${portfolioData.contact.phone.replace(/\s/g, '')}`}>
+          <Phone size={15} />
+          {portfolioData.contact.phone}
         </a>
         <div>
           <a href={portfolioData.contact.linkedin} target="_blank" rel="noreferrer">
@@ -484,8 +709,26 @@ function ContactPanel() {
             <Github size={15} />
             GitHub
           </a>
+          <a href={portfolioData.contact.twitter} target="_blank" rel="noreferrer">
+            <Twitter size={15} />
+            Twitter/X
+          </a>
+          <a href={portfolioData.contact.instagram} target="_blank" rel="noreferrer">
+            <Instagram size={15} />
+            Instagram
+          </a>
         </div>
+        <p className="contact-meta-line">Preferred: {portfolioData.contact.preferred} · {portfolioData.contact.timezone}</p>
       </section>
+      <PanelDivider />
+      <div className="panel-detail-grid">
+        <DetailCard eyebrow="Current Address" title="Jaipur">
+          <p>{portfolioData.contact.currentAddress}</p>
+        </DetailCard>
+        <DetailCard eyebrow="Permanent Address" title="Durgapur">
+          <p>{portfolioData.contact.permanentAddress}</p>
+        </DetailCard>
+      </div>
       <aside className="availability-card">
         <i />
         {displayText(portfolioData.contact.availability)}

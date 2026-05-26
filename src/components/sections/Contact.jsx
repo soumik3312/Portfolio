@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Github, Instagram, Linkedin, Mail, Phone, Send, Twitter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { portfolio } from '../../data/portfolio';
+import { sendContactMessage } from '../../services/contactMailer';
 
 const iconMap = {
   LinkedIn: Linkedin,
@@ -26,22 +27,15 @@ export default function Contact({ onSound }) {
     onSound?.('click');
     setStatus('sending');
 
-    const endpoint = portfolio.contact.formspreeEndpoint;
-    if (endpoint.startsWith('N/A')) {
-      const subject = encodeURIComponent(`Portfolio inquiry from ${form.name || 'visitor'}`);
-      const body = encodeURIComponent(`${form.message}\n\nFrom: ${form.name}\nEmail: ${form.email}`);
-      window.location.href = `mailto:${portfolio.contact.email}?subject=${subject}&body=${body}`;
-      setStatus('fallback');
-      return;
-    }
-
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      setStatus(response.ok ? 'success' : 'error');
+      const result = await sendContactMessage(form, 'Full contact section');
+      if (result.status === 'fallback') {
+        window.location.href = result.fallbackUrl;
+        setStatus('fallback');
+        return;
+      }
+      setStatus('success');
+      setForm({ name: '', email: '', message: '' });
     } catch {
       setStatus('error');
     }
@@ -118,7 +112,7 @@ export default function Contact({ onSound }) {
             <p className="mt-4 min-h-6 text-sm text-cyan-100">
               {status === 'success' ? 'Message sent successfully.' : null}
               {status === 'error' ? 'Message failed. Try again.' : null}
-              {status === 'fallback' ? 'Form endpoint is not configured. Opening your email client instead.' : null}
+              {status === 'fallback' ? 'Direct email service is not configured yet. Opening your email client instead.' : null}
             </p>
           </motion.form>
 

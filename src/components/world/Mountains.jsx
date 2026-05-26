@@ -84,7 +84,7 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
   const baseMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? mountainColors[mountain.id] : '#1a2535',
+        color: isDay ? mountainColors[mountain.id] : '#3a526c',
         roughness: 0.85,
         metalness: 0,
       }),
@@ -104,7 +104,7 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
   const patchMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#6b7a65' : '#334154',
+        color: isDay ? '#6b7a65' : '#607287',
         roughness: 0.92,
         metalness: 0,
       }),
@@ -114,7 +114,7 @@ const Mountain = React.memo(function Mountain({ mountain, mode, index }) {
   const ledgeMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? '#8aa078' : '#40536a',
+        color: isDay ? '#8aa078' : '#71889d',
         roughness: 0.94,
         metalness: 0,
       }),
@@ -195,11 +195,11 @@ const BackgroundMountain = React.memo(function BackgroundMountain({ mountain, mo
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isDay ? backgroundMountainColors[index % backgroundMountainColors.length] : '#24364e',
+        color: isDay ? backgroundMountainColors[index % backgroundMountainColors.length] : '#526f83',
         roughness: 0.95,
         metalness: 0,
         transparent: true,
-        opacity: isDay ? 0.82 : 0.62,
+        opacity: isDay ? 0.82 : 0.72,
       }),
     [index, isDay],
   );

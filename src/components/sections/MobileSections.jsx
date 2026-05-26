@@ -11,14 +11,21 @@ const MobileSections = React.memo(function MobileSections() {
       <section>
         <h2>Skills</h2>
         <div className="mobile-tags">
-          {[...portfolioData.skills.mobile.slice(0, 5), ...portfolioData.skills.aiml.slice(0, 5), ...portfolioData.skills.fullstack.slice(0, 5)].map((skill) => (
+          {[
+            ...portfolioData.skills.mobile,
+            ...portfolioData.skills.aiml,
+            ...portfolioData.skills.fullstack,
+            ...portfolioData.skills.databases,
+            ...portfolioData.skills.languages,
+            ...portfolioData.skills.tools,
+          ].map((skill) => (
             <span key={skill}>{skill}</span>
           ))}
         </div>
       </section>
       <section>
         <h2>Projects</h2>
-        {portfolioData.projects.slice(0, 4).map((project) => (
+        {portfolioData.projects.map((project) => (
           <a key={project.name} href={project.github} target="_blank" rel="noreferrer" className="mobile-card">
             <b>{project.name}</b>
             <p>{project.description}</p>
@@ -54,6 +61,13 @@ const MobileSections = React.memo(function MobileSections() {
         <h2>Contact</h2>
         <p>{portfolioData.contact.availability}</p>
         <a href={`mailto:${portfolioData.contact.email}`} className="mobile-primary-link">{portfolioData.contact.email}</a>
+        <a href={`tel:${portfolioData.contact.phone.replace(/\s/g, '')}`} className="mobile-primary-link">{portfolioData.contact.phone}</a>
+        {portfolioData.socials.map((social) => (
+          <a key={social.label} href={social.url} target="_blank" rel="noreferrer" className="mobile-card">
+            <b>{social.label}</b>
+            <p>{social.handle}</p>
+          </a>
+        ))}
       </section>
     </main>
   );

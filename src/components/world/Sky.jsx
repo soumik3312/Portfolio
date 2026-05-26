@@ -19,6 +19,27 @@ const skyGlints = [
   { position: [-30, 21, -190], scale: [0.16, 0.16, 0.16] },
 ];
 
+const constellations = [
+  [
+    [-28, 33, -72],
+    [-24, 36, -82],
+    [-19, 34, -93],
+    [-16, 38, -104],
+  ],
+  [
+    [20, 35, -126],
+    [25, 38, -138],
+    [30, 35, -150],
+    [34, 39, -160],
+  ],
+  [
+    [-34, 31, -184],
+    [-29, 34, -194],
+    [-25, 32, -206],
+    [-20, 36, -216],
+  ],
+];
+
 const birds = [
   { position: [-30, 18, -80] },
   { position: [-28, 19, -82] },
@@ -36,9 +57,23 @@ const Sky = React.memo(function Sky({ mode }) {
   const blockSunGlowGeometry = useMemo(() => new THREE.PlaneGeometry(14, 14), []);
   const sunRayGeometry = useMemo(() => new THREE.BoxGeometry(0.28, 3.2, 0.05), []);
   const moonGeometry = useMemo(() => new THREE.SphereGeometry(5, 12, 8), []);
+  const moonGlowGeometry = useMemo(() => new THREE.SphereGeometry(7.2, 16, 10), []);
+  const auroraGeometry = useMemo(() => new THREE.PlaneGeometry(42, 8, 1, 1), []);
   const cloudGeometry = useMemo(() => new THREE.SphereGeometry(1, 12, 8), []);
   const glintGeometry = useMemo(() => new THREE.OctahedronGeometry(1, 0), []);
   const wingGeometry = useMemo(() => new THREE.BoxGeometry(0.4, 0.05, 0.15), []);
+  const constellationGeometry = useMemo(() => {
+    const points = [];
+    constellations.forEach((shape) => {
+      for (let index = 0; index < shape.length - 1; index += 1) {
+        points.push(...shape[index], ...shape[index + 1]);
+      }
+    });
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    return geometry;
+  }, []);
 
   const sunMaterial = useMemo(
     () =>
@@ -108,12 +143,57 @@ const Sky = React.memo(function Sky({ mode }) {
     [isDay],
   );
 
+  const moonGlowMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#cde4ff',
+        transparent: true,
+        opacity: isDay ? 0 : 0.28,
+        depthWrite: false,
+      }),
+    [isDay],
+  );
+
+  const auroraMaterialA = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#8fffe1',
+        transparent: true,
+        opacity: isDay ? 0 : 0.24,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    [isDay],
+  );
+
+  const auroraMaterialB = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#a9a1ff',
+        transparent: true,
+        opacity: isDay ? 0 : 0.18,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    [isDay],
+  );
+
+  const constellationMaterial = useMemo(
+    () =>
+      new THREE.LineBasicMaterial({
+        color: '#d8f1ff',
+        transparent: true,
+        opacity: isDay ? 0 : 0.42,
+      }),
+    [isDay],
+  );
+
   const cloudMaterial = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         color: '#ffffff',
         transparent: true,
-        opacity: isDay ? 0.9 : 0.24,
+        opacity: isDay ? 0.9 : 0.34,
         depthWrite: false,
       }),
     [isDay],
@@ -175,7 +255,11 @@ const Sky = React.memo(function Sky({ mode }) {
           />
         ))}
       </group>
+      <mesh geometry={moonGlowGeometry} material={moonGlowMaterial} position={[38, 54, -150]} />
       <mesh geometry={moonGeometry} material={moonMaterial} position={[38, 54, -150]} />
+      <mesh geometry={auroraGeometry} material={auroraMaterialA} position={[-16, 34, -178]} rotation={[0.08, 0.35, -0.12]} />
+      <mesh geometry={auroraGeometry} material={auroraMaterialB} position={[22, 37, -222]} rotation={[0.06, -0.28, 0.1]} />
+      <lineSegments geometry={constellationGeometry} material={constellationMaterial} />
       {skyGlints.map((glint) => (
         <mesh key={`${glint.position[0]}-${glint.position[2]}`} geometry={glintGeometry} material={glintMaterial} position={glint.position} scale={glint.scale} />
       ))}
