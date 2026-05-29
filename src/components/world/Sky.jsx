@@ -47,7 +47,7 @@ const birds = [
   { position: [-26, 18.5, -84] },
 ];
 
-const Sky = React.memo(function Sky({ mode }) {
+const Sky = React.memo(function Sky({ mode, isMobile = false }) {
   const cloudRef = useRef(null);
   const birdsRef = useRef(null);
   const isDay = mode === 'day';
@@ -222,6 +222,7 @@ const Sky = React.memo(function Sky({ mode }) {
   );
 
   useFrame((state, delta) => {
+    if (isMobile) return;
     if (!cloudRef.current) return;
     cloudRef.current.position.x += delta * 0.05;
     if (cloudRef.current.position.x > 6) cloudRef.current.position.x = -6;

@@ -34,7 +34,7 @@ const displayText = (value) => {
 
 const isInteractiveOverlayTarget = (target) => {
   if (!(target instanceof Element)) return false;
-  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .journey-map'));
+  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .journey-map, .navbar'));
 };
 
 function DiamondDivider({ compact = false }) {
@@ -851,7 +851,7 @@ function renderPanel(section, onSound) {
   return null;
 }
 
-const boardVariants = {
+const getBoardVariants = (isMobile) => ({
   hidden: {
     opacity: 0,
     scale: 0.88,
@@ -864,7 +864,7 @@ const boardVariants = {
     x: '-50%',
     y: '-50%',
     filter: 'blur(0px)',
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: isMobile ? 0.38 : 0.6, ease: [0.16, 1, 0.3, 1] },
   },
   exit: {
     opacity: 0,
@@ -872,9 +872,9 @@ const boardVariants = {
     x: '-50%',
     y: '-56%',
     filter: 'blur(4px)',
-    transition: { duration: 0.4, ease: [0.4, 0, 1, 1] },
+    transition: { duration: isMobile ? 0.28 : 0.4, ease: [0.4, 0, 1, 1] },
   },
-};
+});
 
 const heroVariants = (delay) => ({
   hidden: {
@@ -899,12 +899,13 @@ const heroVariants = (delay) => ({
 export { DiamondDivider };
 
 export default function ContentPanel({ activeSection, boardState = 'walking', exitBoard, onSound }) {
+  const { isMobile } = useCameraProgress();
   const isHero = activeSection === 'hero';
   const isBoard = Boolean(activeSection && !isHero);
   const shouldShowPanel = Boolean(activeSection && (isHero || boardState !== 'walking'));
   const contentRef = useRef(null);
   const heroHasAnimatedRef = useRef(false);
-  const touchScrollRef = useRef({ tracking: false, lastY: 0 });
+  const touchScrollRef = useRef({ tracking: false, startX: 0, startY: 0, lastY: 0, boundaryTravel: 0, boundaryDirection: null });
   const [isScrollable, setIsScrollable] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
 
@@ -981,6 +982,10 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
 
   useEffect(() => {
     if (!isBoard || boardState === 'walking') return undefined;
+    if (!isMobile) return undefined;
+
+    const board = contentRef.current;
+    if (!board) return undefined;
 
     const handleTouchStart = (event) => {
       if (event.touches.length !== 1 || isInteractiveOverlayTarget(event.target)) {
@@ -988,46 +993,144 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
         return;
       }
 
+      const touch = event.touches[0];
       touchScrollRef.current = {
         tracking: true,
-        lastY: event.touches[0].clientY,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastY: touch.clientY,
+        boundaryTravel: 0,
+        boundaryDirection: null,
       };
     };
 
     const handleTouchMove = (event) => {
       const state = touchScrollRef.current;
       if (!state.tracking || event.touches.length !== 1 || isInteractiveOverlayTarget(event.target)) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
-
       if (boardState !== 'board-open') return;
+
       const currentY = event.touches[0].clientY;
       const deltaY = state.lastY - currentY;
       state.lastY = currentY;
+      if (Math.abs(deltaY) < 0.4) return;
 
-      if (Math.abs(deltaY) > 0.35) {
-        applyBoardScroll(deltaY * 1.15);
+      const scrollable = board.scrollHeight - board.clientHeight > 12;
+      const atBottom = !scrollable || board.scrollTop + board.clientHeight >= board.scrollHeight - 8;
+      const atTop = !scrollable || board.scrollTop <= 0;
+      const boundaryDirection = deltaY > 0 ? 'forward' : 'backward';
+      const pushingPastEdge = (deltaY > 0 && atBottom) || (deltaY < 0 && atTop);
+
+      if (pushingPastEdge) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+
+        if (state.boundaryDirection !== boundaryDirection) {
+          state.boundaryDirection = boundaryDirection;
+          state.boundaryTravel = 0;
+        }
+
+        state.boundaryTravel += Math.abs(deltaY);
+        if (state.boundaryTravel > 52) {
+          state.tracking = false;
+          exitBoard?.(boundaryDirection);
+        }
+        return;
       }
+
+      state.boundaryTravel = 0;
+      state.boundaryDirection = null;
+      window.requestAnimationFrame(updateScrollState);
     };
 
     const stopTouchScroll = () => {
       touchScrollRef.current.tracking = false;
     };
 
+    board.addEventListener('touchstart', handleTouchStart, { passive: true });
+    board.addEventListener('touchmove', handleTouchMove, { passive: false });
+    board.addEventListener('touchend', stopTouchScroll, { passive: true });
+    board.addEventListener('touchcancel', stopTouchScroll, { passive: true });
+
+    return () => {
+      board.removeEventListener('touchstart', handleTouchStart);
+      board.removeEventListener('touchmove', handleTouchMove);
+      board.removeEventListener('touchend', stopTouchScroll);
+      board.removeEventListener('touchcancel', stopTouchScroll);
+    };
+  }, [boardState, exitBoard, isBoard, isMobile, updateScrollState]);
+
+  useEffect(() => {
+    if (!isMobile || !isBoard || boardState === 'walking') return undefined;
+
+    const outsideSwipeRef = { tracking: false, startX: 0, startY: 0, currentX: 0, currentY: 0, lockedVertical: false };
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1 || isInteractiveOverlayTarget(event.target)) {
+        outsideSwipeRef.tracking = false;
+        return;
+      }
+
+      if (event.target instanceof Element && event.target.closest('.section-content-panel')) {
+        outsideSwipeRef.tracking = false;
+        return;
+      }
+
+      const touch = event.touches[0];
+      outsideSwipeRef.tracking = true;
+      outsideSwipeRef.lockedVertical = false;
+      outsideSwipeRef.startX = touch.clientX;
+      outsideSwipeRef.startY = touch.clientY;
+      outsideSwipeRef.currentX = touch.clientX;
+      outsideSwipeRef.currentY = touch.clientY;
+    };
+
+    const handleTouchMove = (event) => {
+      if (!outsideSwipeRef.tracking || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      outsideSwipeRef.currentX = touch.clientX;
+      outsideSwipeRef.currentY = touch.clientY;
+      const totalX = touch.clientX - outsideSwipeRef.startX;
+      const totalY = touch.clientY - outsideSwipeRef.startY;
+
+      if (!outsideSwipeRef.lockedVertical) {
+        if (Math.abs(totalX) < 9 && Math.abs(totalY) < 9) return;
+        if (Math.abs(totalX) > Math.abs(totalY)) {
+          outsideSwipeRef.tracking = false;
+          return;
+        }
+        outsideSwipeRef.lockedVertical = true;
+      }
+
+      event.preventDefault();
+    };
+
+    const handleTouchEnd = (event) => {
+      if (!outsideSwipeRef.tracking) return;
+      const touch = event.changedTouches?.[0];
+      const endX = touch?.clientX ?? outsideSwipeRef.currentX;
+      const endY = touch?.clientY ?? outsideSwipeRef.currentY;
+      const totalX = endX - outsideSwipeRef.startX;
+      const totalY = outsideSwipeRef.startY - endY;
+      outsideSwipeRef.tracking = false;
+
+      if (Math.abs(totalY) < 46 || Math.abs(totalY) < Math.abs(totalX) * 1.15) return;
+      exitBoard?.(totalY > 0 ? 'forward' : 'backward');
+    };
+
     window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    window.addEventListener('touchend', stopTouchScroll, { passive: true });
-    window.addEventListener('touchcancel', stopTouchScroll, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', handleTouchStart, { capture: true });
       window.removeEventListener('touchmove', handleTouchMove, { capture: true });
-      window.removeEventListener('touchend', stopTouchScroll);
-      window.removeEventListener('touchcancel', stopTouchScroll);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [applyBoardScroll, boardState, isBoard]);
+  }, [boardState, exitBoard, isBoard, isMobile]);
 
   useEffect(() => {
     if (!isBoard || boardState === 'walking') return undefined;
@@ -1060,7 +1163,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   }, [applyBoardScroll, boardState, isBoard]);
 
   const heroDelay = isHero && !heroHasAnimatedRef.current ? 0.5 : 0;
-  const variants = isHero ? heroVariants(heroDelay) : boardVariants;
+  const variants = isHero ? heroVariants(heroDelay) : getBoardVariants(isMobile);
 
   return (
     <AnimatePresence mode="wait">

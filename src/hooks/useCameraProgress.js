@@ -4,6 +4,13 @@ import { journeySections } from '../data/portfolio';
 const CameraProgressContext = createContext(null);
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+const MOBILE_AXIS_LOCK_PX = 9;
+const MOBILE_SWIPE_THRESHOLD_PX = 42;
+const MOBILE_WORLD_STEP = 0.075;
+const MOBILE_OPEN_RANGE = 0.066;
+const MOBILE_APPROACH_GAP = 0.058;
+const MOBILE_STEP_COOLDOWN_MS = 180;
+const mobileBoardSections = journeySections.filter((section) => section.id !== 'hero');
 
 const findClosestSection = (progress) =>
   journeySections.reduce((closest, section) => {
@@ -27,12 +34,14 @@ export function CameraProgressProvider({ children }) {
   const targetProgressRef = useRef(0);
   const latestPublishedRef = useRef(0);
   const latestPublishTimeRef = useRef(0);
+  const latestMobileStepTimeRef = useRef(0);
   const touchStateRef = useRef({
     tracking: false,
     lockedVertical: false,
     startX: 0,
     startY: 0,
-    lastY: 0,
+    currentX: 0,
+    currentY: 0,
   });
   const [progress, setProgress] = useState(0);
   const [currentSection, setCurrentSection] = useState(journeySections[0]);
@@ -55,6 +64,38 @@ export function CameraProgressProvider({ children }) {
       const section = journeySections.find((item) => item.id === sectionId);
       if (!section) return;
       setTargetProgress(section.t);
+    },
+    [setTargetProgress],
+  );
+
+  const stepMobileJourney = useCallback(
+    (direction) => {
+      const now = performance.now();
+      if (now - latestMobileStepTimeRef.current < MOBILE_STEP_COOLDOWN_MS) return;
+      latestMobileStepTimeRef.current = now;
+
+      const current = targetProgressRef.current;
+      let nextTarget = current;
+
+      if (direction === 'forward') {
+        const nextBoard = mobileBoardSections.find((section) => section.t > current + 0.006);
+        if (!nextBoard) {
+          nextTarget = 1;
+        } else {
+          const distance = nextBoard.t - current;
+          nextTarget = distance <= MOBILE_OPEN_RANGE ? nextBoard.t : Math.min(current + MOBILE_WORLD_STEP, nextBoard.t - MOBILE_APPROACH_GAP);
+        }
+      } else {
+        const previousBoard = [...mobileBoardSections].reverse().find((section) => section.t < current - 0.006);
+        if (!previousBoard) {
+          nextTarget = 0;
+        } else {
+          const distance = current - previousBoard.t;
+          nextTarget = distance <= MOBILE_OPEN_RANGE ? previousBoard.t : Math.max(current - MOBILE_WORLD_STEP, previousBoard.t + MOBILE_APPROACH_GAP);
+        }
+      }
+
+      setTargetProgress(nextTarget, true);
     },
     [setTargetProgress],
   );
@@ -124,7 +165,8 @@ export function CameraProgressProvider({ children }) {
         lockedVertical: false,
         startX: touch.clientX,
         startY: touch.clientY,
-        lastY: touch.clientY,
+        currentX: touch.clientX,
+        currentY: touch.clientY,
       };
     };
 
@@ -139,9 +181,11 @@ export function CameraProgressProvider({ children }) {
       const touch = event.touches[0];
       const totalX = touch.clientX - state.startX;
       const totalY = touch.clientY - state.startY;
+      state.currentX = touch.clientX;
+      state.currentY = touch.clientY;
 
       if (!state.lockedVertical) {
-        if (Math.abs(totalX) < 8 && Math.abs(totalY) < 8) return;
+        if (Math.abs(totalX) < MOBILE_AXIS_LOCK_PX && Math.abs(totalY) < MOBILE_AXIS_LOCK_PX) return;
         if (Math.abs(totalX) > Math.abs(totalY)) {
           state.tracking = false;
           return;
@@ -150,16 +194,21 @@ export function CameraProgressProvider({ children }) {
       }
 
       event.preventDefault();
-      const deltaY = state.lastY - touch.clientY;
-      state.lastY = touch.clientY;
-
-      if (Math.abs(deltaY) > 0.35) {
-        setTargetProgress(targetProgressRef.current + deltaY * 0.00125);
-      }
     };
 
-    const stopTouchTracking = () => {
-      touchStateRef.current.tracking = false;
+    const stopTouchTracking = (event) => {
+      const state = touchStateRef.current;
+      if (!state.tracking) return;
+
+      const touch = event.changedTouches?.[0];
+      const endX = touch?.clientX ?? state.currentX;
+      const endY = touch?.clientY ?? state.currentY;
+      const totalX = endX - state.startX;
+      const totalY = state.startY - endY;
+      state.tracking = false;
+
+      if (Math.abs(totalY) < MOBILE_SWIPE_THRESHOLD_PX || Math.abs(totalY) < Math.abs(totalX) * 1.15) return;
+      stepMobileJourney(totalY > 0 ? 'forward' : 'backward');
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
@@ -173,7 +222,7 @@ export function CameraProgressProvider({ children }) {
       window.removeEventListener('touchend', stopTouchTracking);
       window.removeEventListener('touchcancel', stopTouchTracking);
     };
-  }, [isMobile, setTargetProgress, targetProgressRef]);
+  }, [isMobile, stepMobileJourney, targetProgressRef]);
 
   const value = useMemo(
     () => ({

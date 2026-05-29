@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { RiverFoam } from './Particles';
 import { createOffsetCurve, seededRandom } from './path';
 
-const RiverSparkles = React.memo(function RiverSparkles({ curve, mode }) {
+const RiverSparkles = React.memo(function RiverSparkles({ curve, mode, isMobile = false }) {
   const count = 44;
   const isDay = mode === 'day';
   const progress = useRef(Array.from({ length: count }, (_, index) => seededRandom(index + 1001)));
@@ -37,6 +37,7 @@ const RiverSparkles = React.memo(function RiverSparkles({ curve, mode }) {
   );
 
   useFrame((state, delta) => {
+    if (isMobile) return;
     const position = geometry.attributes.position;
     const time = state.clock.elapsedTime;
 
@@ -59,7 +60,7 @@ const RiverSparkles = React.memo(function RiverSparkles({ curve, mode }) {
   return <points geometry={geometry} material={material} />;
 });
 
-const River = React.memo(function River({ mode }) {
+const River = React.memo(function River({ mode, isMobile = false }) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const rockRef = useRef(null);
   const isDay = mode === 'day';
@@ -152,6 +153,7 @@ const River = React.memo(function River({ mode }) {
   }, [dummy, riverRocks]);
 
   useFrame((state) => {
+    if (isMobile) return;
     if (!waterMaterial) return;
     const time = state.clock.elapsedTime;
     const baseOpacity = isDay ? 0.82 : 0.78;
@@ -168,8 +170,8 @@ const River = React.memo(function River({ mode }) {
       <mesh geometry={outerBankGeometryRight} material={outerBankMaterial} scale={[1, 0.026, 1]} position={[0, 0.018, 0]} />
       <mesh geometry={riverGeometry} material={waterMaterial} scale={[1, 0.05, 1]} position={[0, 0.04, 0]} />
       <instancedMesh ref={rockRef} args={[rockGeometry, rockMaterial, riverRocks.length]} />
-      <RiverFoam curve={riverCurve} />
-      <RiverSparkles curve={riverCurve} mode={mode} />
+      <RiverFoam curve={riverCurve} isMobile={isMobile} />
+      <RiverSparkles curve={riverCurve} mode={mode} isMobile={isMobile} />
     </group>
   );
 });

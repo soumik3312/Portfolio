@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { seededRandom } from './path';
 
-export const RiverFoam = React.memo(function RiverFoam({ curve }) {
+export const RiverFoam = React.memo(function RiverFoam({ curve, isMobile = false }) {
   const count = 80;
   const geometry = useMemo(() => {
     const positions = new Float32Array(count * 3);
@@ -36,6 +36,7 @@ export const RiverFoam = React.memo(function RiverFoam({ curve }) {
   const tempPoint = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((_, delta) => {
+    if (isMobile) return;
     if (!geometry) return;
     const position = geometry.attributes.position;
     for (let index = 0; index < count; index += 1) {
@@ -55,7 +56,7 @@ export const RiverFoam = React.memo(function RiverFoam({ curve }) {
   return <points geometry={geometry} material={material} />;
 });
 
-export const NightParticles = React.memo(function NightParticles({ mode }) {
+export const NightParticles = React.memo(function NightParticles({ mode, isMobile = false }) {
   const isNight = mode === 'night';
   const starGeometry = useMemo(() => {
     const count = 300;
@@ -110,6 +111,7 @@ export const NightParticles = React.memo(function NightParticles({ mode }) {
   );
 
   useFrame((state, delta) => {
+    if (isMobile) return;
     if (!fireflyGeometry || !isNight) return;
     const position = fireflyGeometry.attributes.position;
     const time = state.clock.elapsedTime;
@@ -129,7 +131,7 @@ export const NightParticles = React.memo(function NightParticles({ mode }) {
   );
 });
 
-const FloatingDust = React.memo(function FloatingDust() {
+const FloatingDust = React.memo(function FloatingDust({ isMobile = false }) {
   const count = 50;
   const bounds = useMemo(
     () => ({
@@ -170,6 +172,7 @@ const FloatingDust = React.memo(function FloatingDust() {
   );
 
   useFrame((state, delta) => {
+    if (isMobile) return;
     const position = dustGeometry.attributes.position;
     const time = state.clock.elapsedTime;
 
@@ -194,7 +197,7 @@ const FloatingDust = React.memo(function FloatingDust() {
   return <points geometry={dustGeometry} material={dustMaterial} />;
 });
 
-const CinematicMist = React.memo(function CinematicMist({ mode }) {
+const CinematicMist = React.memo(function CinematicMist({ mode, isMobile = false }) {
   const isNight = mode === 'night';
   const mistRefs = useRef([]);
   const bands = useMemo(
@@ -213,6 +216,7 @@ const CinematicMist = React.memo(function CinematicMist({ mode }) {
   );
 
   useFrame((state, delta) => {
+    if (isMobile) return;
     const time = state.clock.elapsedTime;
     mistRefs.current.forEach((mesh, index) => {
       if (!mesh) return;
@@ -244,12 +248,12 @@ const CinematicMist = React.memo(function CinematicMist({ mode }) {
   );
 });
 
-const Particles = React.memo(function Particles({ mode }) {
+const Particles = React.memo(function Particles({ mode, isMobile = false }) {
   return (
     <group>
-      <FloatingDust />
-      <CinematicMist mode={mode} />
-      <NightParticles mode={mode} />
+      <FloatingDust isMobile={isMobile} />
+      <CinematicMist mode={mode} isMobile={isMobile} />
+      <NightParticles mode={mode} isMobile={isMobile} />
     </group>
   );
 });

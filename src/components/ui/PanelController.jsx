@@ -4,8 +4,12 @@ import { sectionTValues } from '../../data/portfolio';
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const BOARD_ENTER_MS = 600;
 const BOARD_EXIT_MS = 500;
+const MOBILE_BOARD_ENTER_MS = 420;
+const MOBILE_BOARD_EXIT_MS = 340;
+const DESKTOP_BOARD_EXIT_OFFSET = 0.07;
+const MOBILE_BOARD_EXIT_OFFSET = 0.04;
 
-export function usePanelSystem({ progressRef, targetProgressRef, setTargetProgress }) {
+export function usePanelSystem({ progressRef, targetProgressRef, setTargetProgress, isMobile = false }) {
   const sections = useMemo(
     () => [
       { id: 'hero', t: sectionTValues.hero },
@@ -61,11 +65,11 @@ export function usePanelSystem({ progressRef, targetProgressRef, setTargetProgre
         if (lockedSectionRef.current?.id === section.id && boardStateRef.current === 'board-entering') {
           setState('board-open');
         }
-      }, BOARD_ENTER_MS);
+      }, isMobile ? MOBILE_BOARD_ENTER_MS : BOARD_ENTER_MS);
 
       timersRef.current.push(enterTimer);
     },
-    [clearTimers, setActive, setState, setTargetProgress],
+    [clearTimers, isMobile, setActive, setState, setTargetProgress],
   );
 
   const exitBoard = useCallback(
@@ -78,17 +82,18 @@ export function usePanelSystem({ progressRef, targetProgressRef, setTargetProgre
       setNavigationTarget(null);
       dismissedSectionRef.current = section.id;
       setState('board-exiting');
-      setTargetProgress(clamp(section.t + (direction === 'forward' ? 0.07 : -0.07)), true);
+      const exitOffset = isMobile ? MOBILE_BOARD_EXIT_OFFSET : DESKTOP_BOARD_EXIT_OFFSET;
+      setTargetProgress(clamp(section.t + (direction === 'forward' ? exitOffset : -exitOffset)), true);
 
       const exitTimer = window.setTimeout(() => {
         lockedSectionRef.current = null;
         setActive(null);
         setState('walking');
-      }, BOARD_EXIT_MS);
+      }, isMobile ? MOBILE_BOARD_EXIT_MS : BOARD_EXIT_MS);
 
       timersRef.current.push(exitTimer);
     },
-    [clearTimers, sections, setActive, setState, setTargetProgress],
+    [clearTimers, isMobile, sections, setActive, setState, setTargetProgress],
   );
 
   const navigateToSection = useCallback(

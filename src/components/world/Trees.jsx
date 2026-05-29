@@ -15,7 +15,7 @@ const mountainAnchors = [
   [0, -258],
 ];
 
-const Trees = React.memo(function Trees({ mode }) {
+const Trees = React.memo(function Trees({ mode, isMobile = false }) {
   const count = 120;
   const trunkRef = useRef(null);
   const foliageRef = useRef(null);
@@ -101,6 +101,7 @@ const Trees = React.memo(function Trees({ mode }) {
   }, [dummy, trees]);
 
   useFrame((state) => {
+    if (isMobile) return;
     if (!foliageRef.current) return;
     const time = state.clock.elapsedTime;
 

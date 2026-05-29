@@ -17,10 +17,12 @@ export const pathPoints = [
   new THREE.Vector3(0, 0, -260),
 ];
 
-export const createJourneyCurve = () => new THREE.CatmullRomCurve3(pathPoints.map((point) => point.clone()));
+export const MOBILE_WORLD_X_SCALE = 0.72;
 
-export const createOffsetCurve = (offsetX = 0) =>
-  new THREE.CatmullRomCurve3(pathPoints.map((point) => new THREE.Vector3(point.x + offsetX, point.y, point.z)));
+export const createJourneyCurve = (xScale = 1) => new THREE.CatmullRomCurve3(pathPoints.map((point) => new THREE.Vector3(point.x * xScale, point.y, point.z)));
+
+export const createOffsetCurve = (offsetX = 0, xScale = 1) =>
+  new THREE.CatmullRomCurve3(pathPoints.map((point) => new THREE.Vector3((point.x + offsetX) * xScale, point.y, point.z)));
 
 export const seededRandom = (seed) => {
   const x = Math.sin(seed * 999.97) * 43758.5453123;

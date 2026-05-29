@@ -20,7 +20,7 @@ function MountainJourney() {
   const { mode, toggleMode } = useDayNight();
   const { enabled: soundEnabled, toggleSound, play } = useSound(mode);
   const { currentSection, progressRef, targetProgressRef, setTargetProgress, isMobile } = useCameraProgress();
-  const { activeSection, boardState, exitBoard, navigateToSection, navigationTarget } = usePanelSystem({ progressRef, targetProgressRef, setTargetProgress });
+  const { activeSection, boardState, exitBoard, navigateToSection, navigationTarget } = usePanelSystem({ progressRef, targetProgressRef, setTargetProgress, isMobile });
   const previousBoardStateRef = useRef(boardState);
   const handleReady = useCallback(() => setLoading(false), []);
   const activeNavSection = navigationTarget || activeSection || currentSection.id;
@@ -47,7 +47,7 @@ function MountainJourney() {
 
   return (
     <div className={`app-shell ${isMobile ? 'is-touch-journey' : ''}`}>
-      <World mode={mode} onReady={handleReady} blurred={isBoardVisible} />
+      <World mode={mode} onReady={handleReady} blurred={isBoardVisible} isMobile={isMobile} />
       <LoadingScreen visible={loading} />
       <ProgressBar />
       <div className={`world-board-overlay ${isBoardVisible ? 'is-visible' : ''}`} />

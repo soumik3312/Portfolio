@@ -13,6 +13,7 @@ import Sky from './Sky';
 import StreetLights from './StreetLights';
 import Trees from './Trees';
 import VoxelDetails from './VoxelDetails';
+import { MOBILE_WORLD_X_SCALE } from './path';
 
 const signboards = [
   { id: 'about', sectionName: 'About Me', position: [4.7, 0, -36], rotation: [0, -0.15, 0] },
@@ -42,32 +43,36 @@ const Lights = React.memo(function Lights({ mode }) {
   );
 });
 
-const SceneContent = React.memo(function SceneContent({ mode }) {
+const SceneContent = React.memo(function SceneContent({ mode, isMobile }) {
+  const worldScaleX = isMobile ? MOBILE_WORLD_X_SCALE : 1;
+
   return (
     <>
       <fog attach="fog" args={[mode === 'day' ? '#c8e8d4' : '#7890a8', mode === 'day' ? 95 : 125, mode === 'day' ? 285 : 350]} />
       <CameraController />
       <Lights mode={mode} />
-      <Sky mode={mode} />
-      <Ground mode={mode} />
-      <River mode={mode} />
-      <Mountains mode={mode} />
-      <Trees mode={mode} />
-      <VoxelDetails mode={mode} />
-      <Rocks mode={mode} />
-      <StreetLights mode={mode} />
-      <Particles mode={mode} />
-      {signboards.map((board) => (
-        <React.Fragment key={board.id}>
-          <Signboard sectionName={board.sectionName} position={board.position} rotation={board.rotation} mode={mode} />
-          <MinecraftChest sectionId={board.id} position={[board.position[0] * 0.92, 0.16, board.position[2] + 2.1]} rotation={board.rotation} mode={mode} />
-        </React.Fragment>
-      ))}
+      <group scale={[worldScaleX, 1, 1]}>
+        <Sky mode={mode} isMobile={isMobile} />
+        <Ground mode={mode} />
+        <River mode={mode} isMobile={isMobile} />
+        <Mountains mode={mode} />
+        <Trees mode={mode} isMobile={isMobile} />
+        <VoxelDetails mode={mode} />
+        <Rocks mode={mode} />
+        <StreetLights mode={mode} />
+        <Particles mode={mode} isMobile={isMobile} />
+        {signboards.map((board) => (
+          <React.Fragment key={board.id}>
+            <Signboard sectionName={board.sectionName} position={board.position} rotation={board.rotation} mode={mode} />
+            <MinecraftChest sectionId={board.id} position={[board.position[0] * 0.92, 0.16, board.position[2] + 2.1]} rotation={board.rotation} mode={mode} />
+          </React.Fragment>
+        ))}
+      </group>
     </>
   );
 });
 
-const World = React.memo(function World({ mode, onReady, blurred = false }) {
+const World = React.memo(function World({ mode, onReady, blurred = false, isMobile = false }) {
   const handleCreated = useCallback(
     ({ scene }) => {
       scene.background = null;
@@ -79,7 +84,7 @@ const World = React.memo(function World({ mode, onReady, blurred = false }) {
   return (
     <Canvas
       shadows={false}
-      dpr={[1, 1.5]}
+      dpr={isMobile ? [0.85, 1.15] : [1, 1.5]}
       performance={{ min: 0.5 }}
       gl={{
         antialias: false,
@@ -89,10 +94,10 @@ const World = React.memo(function World({ mode, onReady, blurred = false }) {
         alpha: true,
       }}
       camera={{
-        fov: 60,
+        fov: isMobile ? 76 : 60,
         near: 0.1,
         far: 400,
-        position: [0, 1.8, 0],
+        position: [0, isMobile ? 2.35 : 1.8, 0],
       }}
       onCreated={handleCreated}
       className={`world-canvas ${blurred ? 'canvas-blurred' : 'canvas-normal'}`}
@@ -100,7 +105,7 @@ const World = React.memo(function World({ mode, onReady, blurred = false }) {
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
       <Suspense fallback={null}>
-        <SceneContent mode={mode} />
+        <SceneContent mode={mode} isMobile={isMobile} />
       </Suspense>
     </Canvas>
   );
