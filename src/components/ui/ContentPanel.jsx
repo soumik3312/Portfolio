@@ -34,7 +34,7 @@ const displayText = (value) => {
 
 const isInteractiveOverlayTarget = (target) => {
   if (!(target instanceof Element)) return false;
-  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .journey-map, .navbar'));
+  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .panel-scrollbar, .journey-map, .navbar'));
 };
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
@@ -926,6 +926,7 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   const touchScrollRef = useRef({ tracking: false, startX: 0, startY: 0, lastY: 0, boundaryTravel: 0, boundaryDirection: null });
   const [isScrollable, setIsScrollable] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
   const [scrollMetrics, setScrollMetrics] = useState({ thumbTop: 0, thumbHeight: 100 });
 
   const updateScrollState = useCallback(() => {
@@ -971,6 +972,60 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
       window.requestAnimationFrame(updateScrollState);
     },
     [boardState, exitBoard, updateScrollState],
+  );
+
+  const handleScrollbarPointerDown = useCallback(
+    (event) => {
+      if (!isMobile || !isScrollable) return;
+
+      const scroller = contentRef.current;
+      const rail = event.currentTarget;
+      if (!scroller || !rail) return;
+
+      const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+      if (maxScroll <= 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.nativeEvent?.stopImmediatePropagation?.();
+
+      const railRect = rail.getBoundingClientRect();
+      const metrics = getScrollMetrics(scroller);
+      const thumbHeightPx = (metrics.thumbHeight / 100) * railRect.height;
+      const thumbTopPx = (metrics.thumbTop / 100) * railRect.height;
+      const pressedThumb = event.target instanceof Element && event.target.closest('.panel-scrollbar-thumb');
+      const pointerOffset = pressedThumb ? event.clientY - railRect.top - thumbTopPx : thumbHeightPx / 2;
+      const maxThumbTop = Math.max(railRect.height - thumbHeightPx, 1);
+
+      const moveTo = (clientY) => {
+        const thumbTop = clamp(clientY - railRect.top - pointerOffset, 0, maxThumbTop);
+        scroller.scrollTop = (thumbTop / maxThumbTop) * maxScroll;
+        window.requestAnimationFrame(updateScrollState);
+      };
+
+      setIsScrollbarDragging(true);
+      rail.setPointerCapture?.(event.pointerId);
+      if (!pressedThumb) moveTo(event.clientY);
+
+      const handlePointerMove = (moveEvent) => {
+        moveEvent.preventDefault();
+        moveTo(moveEvent.clientY);
+      };
+
+      const stopDragging = () => {
+        setIsScrollbarDragging(false);
+        rail.releasePointerCapture?.(event.pointerId);
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', stopDragging);
+        window.removeEventListener('pointercancel', stopDragging);
+        window.requestAnimationFrame(updateScrollState);
+      };
+
+      window.addEventListener('pointermove', handlePointerMove, { passive: false });
+      window.addEventListener('pointerup', stopDragging, { once: true });
+      window.addEventListener('pointercancel', stopDragging, { once: true });
+    },
+    [isMobile, isScrollable, updateScrollState],
   );
 
   useEffect(() => {
@@ -1302,8 +1357,12 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
               </>
             ) : null}
           </div>
-          <div className={`panel-scrollbar ${isScrollable ? 'is-scrollable' : 'is-static'}`} aria-hidden="true">
-            <span style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
+          <div
+            className={`panel-scrollbar ${isScrollable ? 'is-scrollable' : 'is-static'} ${isScrollbarDragging ? 'is-dragging' : ''}`}
+            onPointerDown={handleScrollbarPointerDown}
+            aria-hidden="true"
+          >
+            <span className="panel-scrollbar-thumb" style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
           </div>
           {isBoard && isScrollable && !isAtBottom ? (
             <div className="board-scroll-fade" aria-hidden="true">

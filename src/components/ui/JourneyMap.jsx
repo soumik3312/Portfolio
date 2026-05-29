@@ -78,6 +78,7 @@ const getScrollMetrics = (element) => {
 const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, onSound, boardState = 'walking' }) {
   const [expanded, setExpanded] = useState(false);
   const panelRef = useRef(null);
+  const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
   const [scrollMetrics, setScrollMetrics] = useState({ scrollable: false, thumbTop: 0, thumbHeight: 100 });
   const activeIndex = useMemo(() => Math.max(0, journeySections.findIndex((section) => section.id === activeSection)), [activeSection]);
   const activeStop = journeySections[activeIndex] || journeySections[0];
@@ -87,6 +88,60 @@ const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, o
   const updateScrollState = useCallback(() => {
     setScrollMetrics(getScrollMetrics(panelRef.current));
   }, []);
+
+  const handleScrollbarPointerDown = useCallback(
+    (event) => {
+      if (!scrollMetrics.scrollable) return;
+
+      const scroller = panelRef.current;
+      const rail = event.currentTarget;
+      if (!scroller || !rail) return;
+
+      const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+      if (maxScroll <= 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.nativeEvent?.stopImmediatePropagation?.();
+
+      const railRect = rail.getBoundingClientRect();
+      const metrics = getScrollMetrics(scroller);
+      const thumbHeightPx = (metrics.thumbHeight / 100) * railRect.height;
+      const thumbTopPx = (metrics.thumbTop / 100) * railRect.height;
+      const pressedThumb = event.target instanceof Element && event.target.closest('.panel-scrollbar-thumb');
+      const pointerOffset = pressedThumb ? event.clientY - railRect.top - thumbTopPx : thumbHeightPx / 2;
+      const maxThumbTop = Math.max(railRect.height - thumbHeightPx, 1);
+
+      const moveTo = (clientY) => {
+        const thumbTop = clamp(clientY - railRect.top - pointerOffset, 0, maxThumbTop);
+        scroller.scrollTop = (thumbTop / maxThumbTop) * maxScroll;
+        window.requestAnimationFrame(updateScrollState);
+      };
+
+      setIsScrollbarDragging(true);
+      rail.setPointerCapture?.(event.pointerId);
+      if (!pressedThumb) moveTo(event.clientY);
+
+      const handlePointerMove = (moveEvent) => {
+        moveEvent.preventDefault();
+        moveTo(moveEvent.clientY);
+      };
+
+      const stopDragging = () => {
+        setIsScrollbarDragging(false);
+        rail.releasePointerCapture?.(event.pointerId);
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', stopDragging);
+        window.removeEventListener('pointercancel', stopDragging);
+        window.requestAnimationFrame(updateScrollState);
+      };
+
+      window.addEventListener('pointermove', handlePointerMove, { passive: false });
+      window.addEventListener('pointerup', stopDragging, { once: true });
+      window.addEventListener('pointercancel', stopDragging, { once: true });
+    },
+    [scrollMetrics.scrollable, updateScrollState],
+  );
 
   useEffect(() => {
     if (!expanded) return undefined;
@@ -122,97 +177,98 @@ const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, o
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
             <button type="button" className="journey-map-backdrop" onClick={toggleMap} aria-label="Close journey map" />
-            <motion.aside
-              ref={panelRef}
-              className="journey-map-panel"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Trail map"
-              onScroll={updateScrollState}
+            <motion.div
+              className="journey-map-panel-shell"
               initial={{ opacity: 0, y: 18, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.96 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
-              <header>
-                <span>
-                  <Compass size={15} />
-                  Trail Compass
-                </span>
-                <button type="button" onClick={toggleMap} aria-label="Close journey map">
-                  <X size={16} />
-                </button>
-              </header>
-
-              <div className="journey-map-layout">
-                <div className="journey-map-board" aria-label="Portfolio trail overview">
-                  <span className="journey-map-compass-rose" aria-hidden="true">
-                    <Compass size={34} />
+              <aside ref={panelRef} className="journey-map-panel" role="dialog" aria-modal="true" aria-label="Trail map" onScroll={updateScrollState}>
+                <header>
+                  <span>
+                    <Compass size={15} />
+                    Trail Compass
                   </span>
-                  <div className="journey-map-path-line" aria-hidden="true" />
-                  {journeySections.map((section, index) => {
-                    const details = stopIntel[section.id] || stopIntel.hero;
-                    return (
-                      <button
-                        key={section.id}
-                        type="button"
-                        className={`journey-map-node ${section.id === activeStop.id ? 'is-active' : ''}`}
-                        style={{ '--stop-x': details.x, '--stop-y': details.y }}
-                        onClick={() => goToStop(section.id)}
-                        onMouseEnter={() => onSound?.('hover')}
-                        aria-label={`Go to ${section.navLabel}`}
-                      >
-                        <MapPin size={18} />
-                        <span>{index + 1}</span>
-                      </button>
-                    );
-                  })}
+                  <button type="button" onClick={toggleMap} aria-label="Close journey map">
+                    <X size={16} />
+                  </button>
+                </header>
+
+                <div className="journey-map-layout">
+                  <div className="journey-map-board" aria-label="Portfolio trail overview">
+                    <span className="journey-map-compass-rose" aria-hidden="true">
+                      <Compass size={34} />
+                    </span>
+                    <div className="journey-map-path-line" aria-hidden="true" />
+                    {journeySections.map((section, index) => {
+                      const details = stopIntel[section.id] || stopIntel.hero;
+                      return (
+                        <button
+                          key={section.id}
+                          type="button"
+                          className={`journey-map-node ${section.id === activeStop.id ? 'is-active' : ''}`}
+                          style={{ '--stop-x': details.x, '--stop-y': details.y }}
+                          onClick={() => goToStop(section.id)}
+                          onMouseEnter={() => onSound?.('hover')}
+                          aria-label={`Go to ${section.navLabel}`}
+                        >
+                          <MapPin size={18} />
+                          <span>{index + 1}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <aside className="journey-map-intel">
+                    <span>Current Marker</span>
+                    <h3>{activeStop.navLabel}</h3>
+                    <p>{activeIntel.detail}</p>
+                    <div>
+                      <small>Terrain</small>
+                      <strong>{activeIntel.terrain}</strong>
+                    </div>
+                    <div>
+                      <small>Loot</small>
+                      <strong>{activeIntel.loot}</strong>
+                    </div>
+                    <div>
+                      <small>Progress</small>
+                      <strong>{Math.round(activePercent)}%</strong>
+                    </div>
+                  </aside>
                 </div>
 
-                <aside className="journey-map-intel">
-                  <span>Current Marker</span>
-                  <h3>{activeStop.navLabel}</h3>
-                  <p>{activeIntel.detail}</p>
-                  <div>
-                    <small>Terrain</small>
-                    <strong>{activeIntel.terrain}</strong>
-                  </div>
-                  <div>
-                    <small>Loot</small>
-                    <strong>{activeIntel.loot}</strong>
-                  </div>
-                  <div>
-                    <small>Progress</small>
-                    <strong>{Math.round(activePercent)}%</strong>
-                  </div>
-                </aside>
+                <div className="journey-map-route" style={{ '--active-percent': `${activePercent}%` }}>
+                  {journeySections.map((section, index) => (
+                    <button
+                      key={section.id}
+                      type="button"
+                      className={section.id === activeStop.id ? 'is-active' : ''}
+                      style={{ '--stop-index': index }}
+                      onClick={() => goToStop(section.id)}
+                      onMouseEnter={() => onSound?.('hover')}
+                    >
+                      <i>
+                        <MapPin size={13} />
+                      </i>
+                      <span>
+                        <strong>{section.navLabel}</strong>
+                        <small>{section.title}</small>
+                        <em>{(stopIntel[section.id] || stopIntel.hero).terrain}</em>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+              <div
+                className={`panel-scrollbar map-scrollbar ${scrollMetrics.scrollable ? 'is-scrollable' : 'is-static'} ${isScrollbarDragging ? 'is-dragging' : ''}`}
+                onPointerDown={handleScrollbarPointerDown}
+                aria-hidden="true"
+              >
+                <span className="panel-scrollbar-thumb" style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
               </div>
-
-              <div className="journey-map-route" style={{ '--active-percent': `${activePercent}%` }}>
-                {journeySections.map((section, index) => (
-                  <button
-                    key={section.id}
-                    type="button"
-                    className={section.id === activeStop.id ? 'is-active' : ''}
-                    style={{ '--stop-index': index }}
-                    onClick={() => goToStop(section.id)}
-                    onMouseEnter={() => onSound?.('hover')}
-                  >
-                    <i>
-                      <MapPin size={13} />
-                    </i>
-                    <span>
-                      <strong>{section.navLabel}</strong>
-                      <small>{section.title}</small>
-                      <em>{(stopIntel[section.id] || stopIntel.hero).terrain}</em>
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <div className={`panel-scrollbar map-scrollbar ${scrollMetrics.scrollable ? 'is-scrollable' : 'is-static'}`} aria-hidden="true">
-                <span style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
-              </div>
-            </motion.aside>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
