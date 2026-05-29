@@ -37,6 +37,24 @@ const isInteractiveOverlayTarget = (target) => {
   return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .journey-map, .navbar'));
 };
 
+const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+const getScrollMetrics = (element) => {
+  if (!element) return { scrollable: false, atBottom: false, thumbTop: 0, thumbHeight: 100 };
+
+  const maxScroll = Math.max(element.scrollHeight - element.clientHeight, 0);
+  const scrollable = maxScroll > 12;
+  const thumbHeight = scrollable ? clamp((element.clientHeight / element.scrollHeight) * 100, 16, 100) : 100;
+  const thumbTop = scrollable ? (element.scrollTop / maxScroll) * (100 - thumbHeight) : 0;
+
+  return {
+    scrollable,
+    atBottom: !scrollable || element.scrollTop + element.clientHeight >= element.scrollHeight - 12,
+    thumbTop,
+    thumbHeight,
+  };
+};
+
 function DiamondDivider({ compact = false }) {
   return (
     <div className={`diamond-divider ${compact ? 'is-compact' : ''}`} aria-hidden="true">
@@ -899,7 +917,7 @@ const heroVariants = (delay) => ({
 export { DiamondDivider };
 
 export default function ContentPanel({ activeSection, boardState = 'walking', exitBoard, onSound }) {
-  const { isMobile } = useCameraProgress();
+  const { isMobile, stepMobileJourney } = useCameraProgress();
   const isHero = activeSection === 'hero';
   const isBoard = Boolean(activeSection && !isHero);
   const shouldShowPanel = Boolean(activeSection && (isHero || boardState !== 'walking'));
@@ -908,19 +926,22 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   const touchScrollRef = useRef({ tracking: false, startX: 0, startY: 0, lastY: 0, boundaryTravel: 0, boundaryDirection: null });
   const [isScrollable, setIsScrollable] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [scrollMetrics, setScrollMetrics] = useState({ thumbTop: 0, thumbHeight: 100 });
 
   const updateScrollState = useCallback(() => {
-    const board = contentRef.current;
-    if (!board || !isBoard) {
+    const panel = contentRef.current;
+    if (!panel || !shouldShowPanel) {
       setIsScrollable(false);
       setIsAtBottom(false);
+      setScrollMetrics({ thumbTop: 0, thumbHeight: 100 });
       return;
     }
 
-    const scrollable = board.scrollHeight - board.clientHeight > 12;
-    setIsScrollable(scrollable);
-    setIsAtBottom(!scrollable || board.scrollTop + board.clientHeight >= board.scrollHeight - 12);
-  }, [isBoard]);
+    const nextMetrics = getScrollMetrics(panel);
+    setIsScrollable(nextMetrics.scrollable);
+    setIsAtBottom(nextMetrics.atBottom);
+    setScrollMetrics({ thumbTop: nextMetrics.thumbTop, thumbHeight: nextMetrics.thumbHeight });
+  }, [shouldShowPanel]);
 
   const applyBoardScroll = useCallback(
     (delta) => {
@@ -961,6 +982,80 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
   useEffect(() => {
     if (isHero) heroHasAnimatedRef.current = true;
   }, [isHero]);
+
+  useEffect(() => {
+    if (!isMobile || !isHero) return undefined;
+
+    const panel = contentRef.current;
+    if (!panel) return undefined;
+
+    const heroTouchRef = { tracking: false, lastY: 0, boundaryTravel: 0, boundaryDirection: null };
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1) {
+        heroTouchRef.tracking = false;
+        return;
+      }
+
+      heroTouchRef.tracking = true;
+      heroTouchRef.lastY = event.touches[0].clientY;
+      heroTouchRef.boundaryTravel = 0;
+      heroTouchRef.boundaryDirection = null;
+    };
+
+    const handleTouchMove = (event) => {
+      if (!heroTouchRef.tracking || event.touches.length !== 1) return;
+
+      const currentY = event.touches[0].clientY;
+      const deltaY = heroTouchRef.lastY - currentY;
+      heroTouchRef.lastY = currentY;
+      if (Math.abs(deltaY) < 0.4) return;
+
+      const { scrollable } = getScrollMetrics(panel);
+      const atBottom = !scrollable || panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 8;
+      const atTop = !scrollable || panel.scrollTop <= 0;
+      const boundaryDirection = deltaY > 0 ? 'forward' : 'backward';
+      const pushingPastEdge = (deltaY > 0 && atBottom) || (deltaY < 0 && atTop);
+
+      if (!pushingPastEdge) {
+        heroTouchRef.boundaryTravel = 0;
+        heroTouchRef.boundaryDirection = null;
+        window.requestAnimationFrame(updateScrollState);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (heroTouchRef.boundaryDirection !== boundaryDirection) {
+        heroTouchRef.boundaryDirection = boundaryDirection;
+        heroTouchRef.boundaryTravel = 0;
+      }
+
+      heroTouchRef.boundaryTravel += Math.abs(deltaY);
+      if (heroTouchRef.boundaryTravel > 52) {
+        heroTouchRef.tracking = false;
+        stepMobileJourney?.(boundaryDirection);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      heroTouchRef.tracking = false;
+    };
+
+    panel.addEventListener('touchstart', handleTouchStart, { passive: true });
+    panel.addEventListener('touchmove', handleTouchMove, { passive: false });
+    panel.addEventListener('touchend', handleTouchEnd, { passive: true });
+    panel.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      panel.removeEventListener('touchstart', handleTouchStart);
+      panel.removeEventListener('touchmove', handleTouchMove);
+      panel.removeEventListener('touchend', handleTouchEnd);
+      panel.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isHero, isMobile, stepMobileJourney, updateScrollState]);
 
   useEffect(() => {
     if (!isBoard || boardState === 'walking') return undefined;
@@ -1206,6 +1301,9 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
                 <p className="board-end-note">↑ scroll up · scroll down to continue journey ↓</p>
               </>
             ) : null}
+          </div>
+          <div className={`panel-scrollbar ${isScrollable ? 'is-scrollable' : 'is-static'}`} aria-hidden="true">
+            <span style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
           </div>
           {isBoard && isScrollable && !isAtBottom ? (
             <div className="board-scroll-fade" aria-hidden="true">

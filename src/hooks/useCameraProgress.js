@@ -236,8 +236,9 @@ export function CameraProgressProvider({ children }) {
       setTargetProgress,
       jumpToSection,
       publishProgress,
+      stepMobileJourney,
     }),
-    [currentSection, hasInteracted, isMobile, jumpToSection, progress, publishProgress, setTargetProgress],
+    [currentSection, hasInteracted, isMobile, jumpToSection, progress, publishProgress, setTargetProgress, stepMobileJourney],
   );
 
   return createElement(CameraProgressContext.Provider, { value }, children);

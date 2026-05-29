@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Compass, MapPin, X } from 'lucide-react';
 import { journeySections } from '../../data/portfolio';
@@ -62,12 +62,37 @@ const stopIntel = {
   },
 };
 
+const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+const getScrollMetrics = (element) => {
+  if (!element) return { scrollable: false, thumbTop: 0, thumbHeight: 100 };
+
+  const maxScroll = Math.max(element.scrollHeight - element.clientHeight, 0);
+  const scrollable = maxScroll > 12;
+  const thumbHeight = scrollable ? clamp((element.clientHeight / element.scrollHeight) * 100, 16, 100) : 100;
+  const thumbTop = scrollable ? (element.scrollTop / maxScroll) * (100 - thumbHeight) : 0;
+
+  return { scrollable, thumbTop, thumbHeight };
+};
+
 const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, onSound, boardState = 'walking' }) {
   const [expanded, setExpanded] = useState(false);
+  const panelRef = useRef(null);
+  const [scrollMetrics, setScrollMetrics] = useState({ scrollable: false, thumbTop: 0, thumbHeight: 100 });
   const activeIndex = useMemo(() => Math.max(0, journeySections.findIndex((section) => section.id === activeSection)), [activeSection]);
   const activeStop = journeySections[activeIndex] || journeySections[0];
   const activeIntel = stopIntel[activeStop.id] || stopIntel.hero;
   const activePercent = (activeIndex / (journeySections.length - 1)) * 100;
+
+  const updateScrollState = useCallback(() => {
+    setScrollMetrics(getScrollMetrics(panelRef.current));
+  }, []);
+
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const frameId = window.requestAnimationFrame(updateScrollState);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [expanded, updateScrollState]);
 
   const toggleMap = () => {
     onSound?.(expanded ? 'close' : 'map');
@@ -98,10 +123,12 @@ const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, o
           >
             <button type="button" className="journey-map-backdrop" onClick={toggleMap} aria-label="Close journey map" />
             <motion.aside
+              ref={panelRef}
               className="journey-map-panel"
               role="dialog"
               aria-modal="true"
               aria-label="Trail map"
+              onScroll={updateScrollState}
               initial={{ opacity: 0, y: 18, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.96 }}
@@ -181,6 +208,9 @@ const JourneyMap = React.memo(function JourneyMap({ activeSection, onNavigate, o
                     </span>
                   </button>
                 ))}
+              </div>
+              <div className={`panel-scrollbar map-scrollbar ${scrollMetrics.scrollable ? 'is-scrollable' : 'is-static'}`} aria-hidden="true">
+                <span style={{ height: `${scrollMetrics.thumbHeight}%`, top: `${scrollMetrics.thumbTop}%` }} />
               </div>
             </motion.aside>
           </motion.div>
