@@ -26,7 +26,7 @@ const isMobileViewport = () => {
 
 const isInteractiveJourneyTarget = (target) => {
   if (!(target instanceof Element)) return false;
-  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .navbar, .section-content-panel, .journey-map'));
+  return Boolean(target.closest('button, a, input, textarea, select, [contenteditable], .navbar, .content-panel, .journey-map'));
 };
 
 export function CameraProgressProvider({ children }) {
