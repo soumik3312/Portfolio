@@ -112,7 +112,7 @@ export default function Contact({ onSound }) {
             <p className="mt-4 min-h-6 text-sm text-cyan-100">
               {status === 'success' ? 'Message sent successfully.' : null}
               {status === 'error' ? 'Message failed. Try again.' : null}
-              {status === 'fallback' ? 'Direct email service is not configured yet. Opening your email client instead.' : null}
+              {status === 'fallback' ? 'Redirecting to your email client — thank you for reaching out!' : null}
             </p>
           </motion.form>
 

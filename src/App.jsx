@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import World from './components/world/World';
-import MobileSections from './components/sections/MobileSections';
+
 import ContentPanel from './components/ui/ContentPanel';
+import CustomCursor from './components/ui/CustomCursor';
 import JourneyMap from './components/ui/JourneyMap';
 import LoadingScreen from './components/ui/LoadingScreen';
 import MinecraftPOVOverlay from './components/ui/MinecraftPOVOverlay';
 import MobileBanner from './components/ui/MobileBanner';
+import MobileNav from './components/ui/MobileNav';
 import Navbar from './components/ui/Navbar';
 import { usePanelSystem } from './components/ui/PanelController';
 import ProgressBar from './components/ui/ProgressBar';
@@ -47,6 +49,7 @@ function MountainJourney() {
 
   return (
     <div className={`app-shell ${isMobile ? 'is-touch-journey' : ''}`}>
+      {!isMobile ? <CustomCursor /> : null}
       <World mode={mode} onReady={handleReady} blurred={isBoardVisible} isMobile={isMobile} />
       <LoadingScreen visible={loading} />
       <ProgressBar />
@@ -58,7 +61,7 @@ function MountainJourney() {
       <ScrollHint />
       <MinecraftPOVOverlay />
       <MobileBanner />
-      <MobileSections />
+      {isMobile ? <MobileNav activeSection={activeNavSection} onNavigate={handleNavigate} /> : null}
     </div>
   );
 }
