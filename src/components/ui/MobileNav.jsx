@@ -10,6 +10,8 @@ const tabs = [
 ];
 
 const MobileNav = React.memo(function MobileNav({ activeSection, onNavigate }) {
+  const activeIndex = tabs.findIndex((t) => t.id === activeSection);
+
   const goTo = (id) => {
     if (onNavigate) {
       onNavigate(id);
@@ -18,6 +20,14 @@ const MobileNav = React.memo(function MobileNav({ activeSection, onNavigate }) {
 
   return (
     <nav className="mobile-nav is-visible" aria-label="Mobile navigation">
+      {/* Sliding active indicator */}
+      <span
+        className="mobile-nav-slider"
+        style={{
+          transform: `translateX(${activeIndex >= 0 ? activeIndex * 100 : 0}%)`,
+        }}
+        aria-hidden="true"
+      />
       {tabs.map((tab) => {
         const isActive = activeSection === tab.id;
         return (
@@ -27,10 +37,10 @@ const MobileNav = React.memo(function MobileNav({ activeSection, onNavigate }) {
             className={`mobile-nav-btn ${isActive ? 'is-active' : ''}`}
             onClick={() => goTo(tab.id)}
             aria-label={tab.label}
+            aria-current={isActive ? 'page' : undefined}
           >
             <tab.Icon size={18} />
             <span>{tab.label}</span>
-            {isActive ? <i className="mobile-nav-dot" /> : null}
           </button>
         );
       })}

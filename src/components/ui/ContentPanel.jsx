@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Download, ExternalLink, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Terminal, Twitter, X } from 'lucide-react';
+import { ArrowRight, Check, Copy, Download, ExternalLink, GitFork, Github, Instagram, Linkedin, Mail, Phone, Send, Star, Terminal, Twitter, X } from 'lucide-react';
 import { portfolioAssets, portfolioData, sectionTValues } from '../../data/portfolio';
 import { useCameraProgress } from '../../hooks/useCameraProgress';
 import { sendContactMessage } from '../../services/contactMailer';
@@ -348,10 +348,72 @@ function AboutPanel() {
   );
 }
 
-function SkillGroup({ title, skills }) {
+const SKILL_CLUSTERS = [
+  {
+    id: 'mobile',
+    label: 'MOBILE DEVELOPMENT',
+    accent: '#1a4a2a',
+    accentLight: 'rgba(26,74,42,0.12)',
+    topSkills: ['Flutter', 'Dart', 'Firebase'],
+    key: 'mobile',
+  },
+  {
+    id: 'aiml',
+    label: 'AI & MACHINE LEARNING',
+    accent: '#5b21b6',
+    accentLight: 'rgba(91,33,182,0.10)',
+    topSkills: ['Python', 'TensorFlow', 'LangChain'],
+    key: 'aiml',
+  },
+  {
+    id: 'fullstack',
+    label: 'FULL STACK & BACKEND',
+    accent: '#0369a1',
+    accentLight: 'rgba(3,105,161,0.10)',
+    topSkills: ['Node.js', 'FastAPI', 'React'],
+    key: 'fullstack',
+  },
+  {
+    id: 'databases',
+    label: 'DATABASES',
+    accent: '#b45309',
+    accentLight: 'rgba(180,83,9,0.10)',
+    topSkills: ['Firebase', 'MongoDB', 'PostgreSQL'],
+    key: 'databases',
+  },
+  {
+    id: 'languages',
+    label: 'PROGRAMMING LANGUAGES',
+    accent: '#065f46',
+    accentLight: 'rgba(6,95,70,0.10)',
+    topSkills: ['Python', 'Dart', 'JavaScript'],
+    key: 'languages',
+  },
+  {
+    id: 'tools',
+    label: 'TOOLS & PLATFORMS',
+    accent: '#7c2d12',
+    accentLight: 'rgba(124,45,18,0.10)',
+    topSkills: ['Git', 'Docker', 'VS Code'],
+    key: 'tools',
+  },
+];
+
+function SkillGroup({ cluster }) {
+  const skills = portfolioData.skills[cluster.key];
   return (
-    <section className="skill-group">
-      <h3>{title}</h3>
+    <section className="skill-cluster-card" style={{ '--cluster-accent': cluster.accent, '--cluster-accent-light': cluster.accentLight }}>
+      <div className="skill-cluster-header">
+        <div className="skill-cluster-left">
+          <span className="skill-cluster-label">{cluster.label}</span>
+          <div className="skill-cluster-top">
+            {cluster.topSkills.map((s) => (
+              <span key={s} className="skill-top-badge">{s}</span>
+            ))}
+          </div>
+        </div>
+        <span className="skill-cluster-count">{skills.length}</span>
+      </div>
       <div className="tag-grid">
         {skills.map((skill) => (
           <Tag key={skill}>{skill}</Tag>
@@ -365,17 +427,11 @@ function SkillsPanel() {
   return (
     <>
       <PanelHeader section="skills" />
-      <SkillGroup title="MOBILE DEVELOPMENT" skills={portfolioData.skills.mobile} />
-      <PanelDivider />
-      <SkillGroup title="AI & MACHINE LEARNING" skills={portfolioData.skills.aiml} />
-      <PanelDivider />
-      <SkillGroup title="FULL STACK & BACKEND" skills={portfolioData.skills.fullstack} />
-      <PanelDivider />
-      <SkillGroup title="DATABASES" skills={portfolioData.skills.databases} />
-      <PanelDivider />
-      <SkillGroup title="PROGRAMMING LANGUAGES" skills={portfolioData.skills.languages} />
-      <PanelDivider />
-      <SkillGroup title="TOOLS & PLATFORMS" skills={portfolioData.skills.tools} />
+      <div className="skill-clusters-stack">
+        {SKILL_CLUSTERS.map((cluster) => (
+          <SkillGroup key={cluster.id} cluster={cluster} />
+        ))}
+      </div>
     </>
   );
 }
@@ -633,24 +689,62 @@ function TimelinePanel() {
   );
 }
 
-function makeHeatmap() {
-  return Array.from({ length: 52 * 7 }, (_, index) => {
-    const weeklyWave = Math.sin(index * 0.29) + Math.cos(index * 0.13);
-    const burst = index % 37 < 9 || index % 61 < 12 ? 1.4 : 0;
-    const quietWeekend = index % 7 > 4 ? -0.9 : 0;
-    const level = Math.max(0, Math.min(4, Math.floor(weeklyWave + burst + quietWeekend + 2)));
-    return { id: index, level };
-  });
-}
-
 function GitHubPanel() {
-  const cells = useMemo(makeHeatmap, []);
+  const username = portfolioData.github.username;
+  const [liveStats, setLiveStats] = useState(null);
+  const [liveRepos, setLiveRepos] = useState([]);
+  const [liveLoading, setLiveLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchGitHub() {
+      try {
+        const [userRes, reposRes] = await Promise.all([
+          fetch(`https://api.github.com/users/${username}`),
+          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6`),
+        ]);
+        if (!userRes.ok || !reposRes.ok) throw new Error('GitHub API error');
+        const user = await userRes.json();
+        const repos = await reposRes.json();
+        if (!cancelled) {
+          setLiveStats({
+            repos: user.public_repos,
+            followers: user.followers,
+            following: user.following,
+            bio: user.bio,
+          });
+          setLiveRepos(
+            repos
+              .filter((r) => !r.fork)
+              .slice(0, 6)
+              .map((r) => ({
+                name: r.name,
+                description: r.description || '',
+                stars: r.stargazers_count,
+                forks: r.forks_count,
+                language: r.language || 'Unknown',
+                url: r.html_url,
+              }))
+          );
+        }
+      } catch {
+        // Fall back to portfolio data silently
+      } finally {
+        if (!cancelled) setLiveLoading(false);
+      }
+    }
+    fetchGitHub();
+    return () => { cancelled = true; };
+  }, [username]);
+
   const stats = [
+    [liveStats?.repos ?? portfolioData.github.stats.repos, 'Public Repos'],
     [portfolioData.github.stats.commits, 'Total Commits'],
-    [portfolioData.github.stats.repos, 'Public Repos'],
-    [portfolioData.github.stats.languages, 'Languages'],
+    [liveStats?.followers ?? portfolioData.github.stats.languages, 'Followers'],
     [portfolioData.github.stats.stars, 'Stars Earned'],
   ];
+
+  const displayRepos = liveRepos.length > 0 ? liveRepos : portfolioData.github.pinned;
 
   return (
     <>
@@ -661,8 +755,12 @@ function GitHubPanel() {
             <Terminal size={13} />
             developer terminal
           </span>
-          <h3>@{portfolioData.github.username}</h3>
-          <p>Public builds, experiments, AI tooling, Flutter apps, backend systems, and product code behind the portfolio.</p>
+          <h3>@{username}</h3>
+          {liveStats?.bio ? (
+            <p>{liveStats.bio}</p>
+          ) : (
+            <p>Public builds, experiments, AI tooling, Flutter apps, backend systems, and product code behind the portfolio.</p>
+          )}
         </div>
         <a href={portfolioData.github.url} target="_blank" rel="noreferrer">
           Open GitHub
@@ -672,7 +770,9 @@ function GitHubPanel() {
       <div className="github-stat-grid">
         {stats.map(([value, label]) => (
           <section key={label}>
-            <strong>{displayText(value)}</strong>
+            <strong>
+              {liveLoading ? '…' : displayText(String(value))}
+            </strong>
             <span>{label}</span>
           </section>
         ))}
@@ -681,34 +781,30 @@ function GitHubPanel() {
       <section className="github-heatmap-block">
         <div className="github-section-heading">
           <h3>Contribution Activity</h3>
-          <span>year view</span>
+          <span>via github-readme-stats</span>
         </div>
-        <div className="github-heatmap">
-          {cells.map((cell, index) => (
-            <motion.span
-              key={cell.id}
-              data-level={cell.level}
-              initial={{ opacity: 0, scale: 0.2 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.002, duration: 0.16 }}
-            />
-          ))}
-        </div>
-        <div className="github-heatmap-legend" aria-hidden="true">
-          <span>Less</span>
-          {[0, 1, 2, 3, 4].map((level) => (
-            <i key={level} data-level={level} />
-          ))}
-          <span>More</span>
+        <div className="github-real-chart-wrap">
+          <img
+            src={`https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&hide_border=true&count_private=true&theme=default&bg_color=fff9ee&title_color=1a4a2a&icon_color=2d6a4f&text_color=3a2010&border_radius=8`}
+            alt={`${username} GitHub stats`}
+            className="github-real-chart"
+            loading="lazy"
+          />
+          <img
+            src={`https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&hide_border=true&theme=default&bg_color=fff9ee&title_color=1a4a2a&text_color=3a2010&border_radius=8`}
+            alt={`${username} top languages`}
+            className="github-real-chart"
+            loading="lazy"
+          />
         </div>
       </section>
       <PanelDivider />
       <div className="github-section-heading">
-        <h3>Pinned Repositories</h3>
-        <span>flagship codebases</span>
+        <h3>Top Repositories</h3>
+        <span>{liveRepos.length > 0 ? 'live · sorted by stars' : 'flagship codebases'}</span>
       </div>
       <div className="pinned-repos">
-        {portfolioData.github.pinned.map((repo) => (
+        {displayRepos.map((repo) => (
           <a key={repo.name} href={repo.url} target="_blank" rel="noreferrer">
             <div>
               <h3>
@@ -736,6 +832,25 @@ function GitHubPanel() {
         ))}
       </div>
     </>
+  );
+}
+
+function CopyEmailButton({ email }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+  return (
+    <button type="button" className="copy-email-btn" onClick={copy} title="Copy email address">
+      {copied ? <Check size={13} /> : <Copy size={13} />}
+      {copied ? 'Copied!' : 'Copy email'}
+    </button>
   );
 }
 
@@ -812,10 +927,13 @@ function ContactPanel({ onSound }) {
       <PanelDivider />
       <section className="direct-channels">
         <h3>Direct Channels</h3>
-        <a href={`mailto:${portfolioData.contact.email}`}>
-          <Mail size={15} />
-          {portfolioData.contact.email}
-        </a>
+        <div className="direct-email-row">
+          <a href={`mailto:${portfolioData.contact.email}`}>
+            <Mail size={15} />
+            {portfolioData.contact.email}
+          </a>
+          <CopyEmailButton email={portfolioData.contact.email} />
+        </div>
         <a href={`tel:${portfolioData.contact.phone.replace(/\s/g, '')}`}>
           <Phone size={15} />
           {portfolioData.contact.phone}
@@ -1345,7 +1463,8 @@ export default function ContentPanel({ activeSection, boardState = 'walking', ex
               }}
               aria-label="Close sign board"
             >
-              <X size={15} />
+              <X size={14} />
+              <span>Close</span>
             </button>
           ) : null}
           <div ref={contentRef} className="content-panel-inner" onScroll={updateScrollState}>

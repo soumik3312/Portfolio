@@ -5,8 +5,10 @@ import {
   Award,
   BrainCircuit,
   Briefcase,
+  Check,
   ChevronDown,
   Code2,
+  Copy,
   Download,
   ExternalLink,
   Filter,
@@ -480,9 +482,90 @@ function MobileTimeline() {
   );
 }
 
+function MobileCertifications() {
+  return (
+    <section className="m-section" id="m-certifications">
+      <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}>
+        <motion.span className="m-section-label" variants={fadeUp}>Certifications</motion.span>
+        <motion.h2 className="m-section-heading" variants={fadeUp}>Credentials & Recognition</motion.h2>
+
+        <div className="m-cert-grid">
+          {portfolioData.certifications.map((cert, i) => (
+            <motion.a
+              key={cert.name}
+              href={cert.credential}
+              target="_blank"
+              rel="noreferrer"
+              className="m-cert-card"
+              variants={fadeUp}
+              custom={i}
+            >
+              <div className="m-cert-header">
+                <Award size={16} className="m-cert-icon" />
+                <span className="m-cert-issuer">{cert.issuer} · {cert.year}</span>
+              </div>
+              <h3 className="m-cert-title">{cert.name}</h3>
+              <p className="m-cert-desc">{cert.description}</p>
+              <span className="m-cert-link">
+                View Credential <ExternalLink size={12} />
+              </span>
+            </motion.a>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
 function MobileGitHub() {
-  const cells = useMemo(makeMobileHeatmap, []);
+  const username = portfolioData.github.username;
+  const [liveStats, setLiveStats] = useState(null);
+  const [liveRepos, setLiveRepos] = useState([]);
+  const [liveLoading, setLiveLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchGitHub() {
+      try {
+        const [userRes, reposRes] = await Promise.all([
+          fetch(`https://api.github.com/users/${username}`),
+          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6`),
+        ]);
+        if (!userRes.ok || !reposRes.ok) throw new Error('GitHub API error');
+        const user = await userRes.json();
+        const repos = await reposRes.json();
+        if (!cancelled) {
+          setLiveStats({
+            repos: user.public_repos,
+            followers: user.followers,
+            bio: user.bio,
+          });
+          setLiveRepos(
+            repos
+              .filter((r) => !r.fork)
+              .slice(0, 6)
+              .map((r) => ({
+                name: r.name,
+                description: r.description || '',
+                stars: r.stargazers_count,
+                forks: r.forks_count,
+                language: r.language || 'Unknown',
+                url: r.html_url,
+              }))
+          );
+        }
+      } catch {
+        // Silently fall back to portfolio data
+      } finally {
+        if (!cancelled) setLiveLoading(false);
+      }
+    }
+    fetchGitHub();
+    return () => { cancelled = true; };
+  }, [username]);
+
   const stats = portfolioData.github.stats;
+  const displayRepos = liveRepos.length > 0 ? liveRepos : portfolioData.github.pinned;
 
   return (
     <section className="m-section" id="m-github">
@@ -490,26 +573,47 @@ function MobileGitHub() {
         <motion.span className="m-section-label" variants={fadeUp}>GitHub</motion.span>
         <motion.h2 className="m-section-heading" variants={fadeUp}>Open Source Activity</motion.h2>
 
-        <motion.div className="m-github-heatmap-wrap" variants={fadeUp}>
-          <div className="m-github-heatmap">
-            {cells.map((level, i) => <span key={i} className="m-heat-cell" data-level={level} />)}
-          </div>
-          <div className="m-heatmap-legend">
-            <span>Less</span>
-            {[0, 1, 2, 3, 4].map((l) => <i key={l} data-level={l} />)}
-            <span>More</span>
-          </div>
+        {/* Real github-readme-stats charts */}
+        <motion.div className="m-github-charts" variants={fadeUp}>
+          <img
+            src={`https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&hide_border=true&count_private=true&theme=default&bg_color=f5f5f5&title_color=1a4a2a&icon_color=2d6a4f&text_color=333&border_radius=10`}
+            alt={`${username} GitHub stats`}
+            className="m-github-chart-img"
+            loading="lazy"
+          />
+          <img
+            src={`https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&hide_border=true&theme=default&bg_color=f5f5f5&title_color=1a4a2a&text_color=333&border_radius=10`}
+            alt={`${username} top languages`}
+            className="m-github-chart-img"
+            loading="lazy"
+          />
         </motion.div>
 
         <motion.div className="m-github-stats" variants={fadeUp}>
-          <div className="m-github-stat"><strong>{stats.commits}</strong><span>Commits</span></div>
-          <div className="m-github-stat"><strong>{stats.repos}</strong><span>Repos</span></div>
-          <div className="m-github-stat"><strong>{stats.languages}</strong><span>Languages</span></div>
-          <div className="m-github-stat"><strong>{stats.stars}</strong><span>Stars</span></div>
+          <div className="m-github-stat">
+            <strong>{liveLoading ? '…' : (liveStats?.repos ?? stats.commits)}</strong>
+            <span>Repos</span>
+          </div>
+          <div className="m-github-stat">
+            <strong>{stats.commits}</strong>
+            <span>Commits</span>
+          </div>
+          <div className="m-github-stat">
+            <strong>{liveLoading ? '…' : (liveStats?.followers ?? stats.languages)}</strong>
+            <span>Followers</span>
+          </div>
+          <div className="m-github-stat">
+            <strong>{stats.stars}</strong>
+            <span>Stars</span>
+          </div>
         </motion.div>
 
+        {liveStats?.bio ? (
+          <motion.p className="m-github-bio" variants={fadeUp}>{liveStats.bio}</motion.p>
+        ) : null}
+
         <motion.div className="m-pinned-repos" variants={staggerContainer}>
-          {portfolioData.github.pinned.map((repo, ri) => (
+          {displayRepos.map((repo, ri) => (
             <motion.a key={repo.name} href={repo.url} target="_blank" rel="noreferrer" className="m-repo-card" variants={fadeUp} custom={ri}>
               <div className="m-repo-header">
                 <Github size={16} />
@@ -530,6 +634,25 @@ function MobileGitHub() {
         </motion.a>
       </motion.div>
     </section>
+  );
+}
+
+function MobileCopyEmail({ email }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+  return (
+    <button type="button" className="m-copy-email-btn" onClick={copy}>
+      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {copied ? 'Copied!' : 'Copy email'}
+    </button>
   );
 }
 
@@ -592,7 +715,10 @@ function MobileContact() {
 
         <motion.div className="m-contact-channels" variants={fadeUp}>
           <h3>Direct Channels</h3>
-          <a href={`mailto:${portfolioData.contact.email}`}><Mail size={16} /> {portfolioData.contact.email}</a>
+          <div className="m-direct-email-row">
+            <a href={`mailto:${portfolioData.contact.email}`}><Mail size={16} /> {portfolioData.contact.email}</a>
+            <MobileCopyEmail email={portfolioData.contact.email} />
+          </div>
           <a href={`tel:${portfolioData.contact.phone.replace(/\s/g, '')}`}><Phone size={16} /> {portfolioData.contact.phone}</a>
         </motion.div>
 
@@ -638,6 +764,7 @@ const MobileSections = React.memo(function MobileSections() {
       <MobileProjects />
       <MobileAI />
       <MobileTimeline />
+      <MobileCertifications />
       <MobileGitHub />
       <MobileContact />
     </main>
