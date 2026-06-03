@@ -8655,4 +8655,135 @@ textarea:focus-visible {
   }
 }
 
+/* ============================================================
+   DESKTOP LANGUAGE BAR — GitHub panel language distribution
+   ============================================================ */
 
+.github-lang-bar-wrap {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 2px;
+}
+
+.github-lang-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.github-lang-bar span {
+  height: 100%;
+  border-radius: 999px;
+  transition: opacity 0.2s ease;
+}
+
+.github-lang-bar span:hover {
+  opacity: 0.8;
+}
+
+.github-lang-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.github-lang-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #3a2010;
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+
+.github-lang-item i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.github-lang-item em {
+  color: #6d4426;
+  font-style: normal;
+  font-size: 9.5px;
+}
+
+[data-theme='night'] .github-lang-item {
+  color: #d4a96a;
+}
+
+[data-theme='night'] .github-lang-item em {
+  color: #a07840;
+}
+
+/* ============================================================
+   MOBILE LANGUAGE BAR
+   ============================================================ */
+
+@media (max-width: 767px) {
+  .m-lang-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 8px;
+  }
+
+  .m-lang-count {
+    color: var(--color-text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  .m-lang-bar-wrap {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .m-lang-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    gap: 2px;
+  }
+
+  .m-lang-bar span {
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .m-lang-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+
+  .m-lang-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-text-secondary);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .m-lang-item i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .m-lang-item em {
+    color: var(--color-text-muted);
+    font-style: normal;
+    font-size: 9px;
+  }
+}

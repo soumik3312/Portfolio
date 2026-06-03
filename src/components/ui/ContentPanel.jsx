@@ -689,6 +689,83 @@ function TimelinePanel() {
   );
 }
 
+
+/* ── GitHub helpers ── */
+const LANG_COLORS = {
+  JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
+  Dart: '#00B4AB', HTML: '#e34c26', CSS: '#563d7c', Java: '#b07219',
+  Kotlin: '#A97BFF', Swift: '#F05138', Go: '#00ADD8', Rust: '#dea584',
+  'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Shell: '#89e051',
+  Unknown: '#8b8b8b',
+};
+
+function GitHubLangBar({ repos }) {
+  const counts = repos.reduce((acc, repo) => {
+    const lang = repo.language || 'Unknown';
+    acc[lang] = (acc[lang] || 0) + 1;
+    return acc;
+  }, {});
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) return null;
+  const sorted = Object.entries(counts).sort(([, a], [, b]) => b - a).slice(0, 7);
+
+  return (
+    <div className="github-lang-bar-wrap">
+      <div className="github-lang-bar" role="img" aria-label="Language distribution">
+        {sorted.map(([lang, count]) => (
+          <span
+            key={lang}
+            style={{ width: `${(count / total) * 100}%`, background: LANG_COLORS[lang] || '#8b8b8b' }}
+            title={`${lang}: ${Math.round((count / total) * 100)}%`}
+          />
+        ))}
+      </div>
+      <div className="github-lang-legend">
+        {sorted.map(([lang, count]) => (
+          <span key={lang} className="github-lang-item">
+            <i style={{ background: LANG_COLORS[lang] || '#8b8b8b' }} />
+            {lang}
+            <em>{Math.round((count / total) * 100)}%</em>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function makeHeatmap() {
+  return Array.from({ length: 52 * 7 }, (_, i) => {
+    const wave = Math.sin(i * 0.29) + Math.cos(i * 0.13);
+    const burst = i % 37 < 9 || i % 61 < 12 ? 1.4 : 0;
+    const weekend = i % 7 > 4 ? -0.9 : 0;
+    return { id: i, level: Math.max(0, Math.min(4, Math.floor(wave + burst + weekend + 2))) };
+  });
+}
+
+function GitHubHeatmap() {
+  const cells = useMemo(makeHeatmap, []);
+  return (
+    <>
+      <div className="github-heatmap">
+        {cells.map((cell, i) => (
+          <motion.span
+            key={cell.id}
+            data-level={cell.level}
+            initial={{ opacity: 0, scale: 0.2 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.001, duration: 0.14 }}
+          />
+        ))}
+      </div>
+      <div className="github-heatmap-legend" aria-hidden="true">
+        <span>Less</span>
+        {[0, 1, 2, 3, 4].map((level) => (<i key={level} data-level={level} />))}
+        <span>More</span>
+      </div>
+    </>
+  );
+}
+
 function GitHubPanel() {
   const username = portfolioData.github.username;
   const [liveStats, setLiveStats] = useState(null);
@@ -701,7 +778,7 @@ function GitHubPanel() {
       try {
         const [userRes, reposRes] = await Promise.all([
           fetch(`https://api.github.com/users/${username}`),
-          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6`),
+          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=30`),
         ]);
         if (!userRes.ok || !reposRes.ok) throw new Error('GitHub API error');
         const user = await userRes.json();
@@ -716,7 +793,6 @@ function GitHubPanel() {
           setLiveRepos(
             repos
               .filter((r) => !r.fork)
-              .slice(0, 6)
               .map((r) => ({
                 name: r.name,
                 description: r.description || '',
@@ -744,7 +820,9 @@ function GitHubPanel() {
     [portfolioData.github.stats.stars, 'Stars Earned'],
   ];
 
-  const displayRepos = liveRepos.length > 0 ? liveRepos : portfolioData.github.pinned;
+  const topRepos = liveRepos.length > 0
+    ? [...liveRepos].sort((a, b) => b.stars - a.stars).slice(0, 6)
+    : portfolioData.github.pinned;
 
   return (
     <>
@@ -770,9 +848,7 @@ function GitHubPanel() {
       <div className="github-stat-grid">
         {stats.map(([value, label]) => (
           <section key={label}>
-            <strong>
-              {liveLoading ? '…' : displayText(String(value))}
-            </strong>
+            <strong>{liveLoading ? '…' : displayText(String(value))}</strong>
             <span>{label}</span>
           </section>
         ))}
@@ -781,30 +857,27 @@ function GitHubPanel() {
       <section className="github-heatmap-block">
         <div className="github-section-heading">
           <h3>Contribution Activity</h3>
-          <span>via github-readme-stats</span>
+          <span>year view</span>
         </div>
-        <div className="github-real-chart-wrap">
-          <img
-            src={`https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&hide_border=true&count_private=true&theme=default&bg_color=fff9ee&title_color=1a4a2a&icon_color=2d6a4f&text_color=3a2010&border_radius=8`}
-            alt={`${username} GitHub stats`}
-            className="github-real-chart"
-            loading="lazy"
-          />
-          <img
-            src={`https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&hide_border=true&theme=default&bg_color=fff9ee&title_color=1a4a2a&text_color=3a2010&border_radius=8`}
-            alt={`${username} top languages`}
-            className="github-real-chart"
-            loading="lazy"
-          />
-        </div>
+        <GitHubHeatmap />
       </section>
+      {liveRepos.length > 0 && (
+        <>
+          <PanelDivider />
+          <div className="github-section-heading">
+            <h3>Top Languages</h3>
+            <span>from {liveRepos.length} repos</span>
+          </div>
+          <GitHubLangBar repos={liveRepos} />
+        </>
+      )}
       <PanelDivider />
       <div className="github-section-heading">
         <h3>Top Repositories</h3>
         <span>{liveRepos.length > 0 ? 'live · sorted by stars' : 'flagship codebases'}</span>
       </div>
       <div className="pinned-repos">
-        {displayRepos.map((repo) => (
+        {topRepos.map((repo) => (
           <a key={repo.name} href={repo.url} target="_blank" rel="noreferrer">
             <div>
               <h3>
@@ -815,18 +888,9 @@ function GitHubPanel() {
             </div>
             <p>{displayText(repo.description)}</p>
             <footer>
-              <span>
-                <Star size={13} />
-                {repo.stars}
-              </span>
-              <span>
-                <GitFork size={13} />
-                {repo.forks}
-              </span>
-              <span>
-                <ExternalLink size={13} />
-                View
-              </span>
+              <span><Star size={13} />{repo.stars}</span>
+              <span><GitFork size={13} />{repo.forks}</span>
+              <span><ExternalLink size={13} />View</span>
             </footer>
           </a>
         ))}

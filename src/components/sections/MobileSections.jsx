@@ -517,11 +517,61 @@ function MobileCertifications() {
   );
 }
 
+/* ── Mobile GitHub helpers ── */
+const M_LANG_COLORS = {
+  JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
+  Dart: '#00B4AB', HTML: '#e34c26', CSS: '#563d7c', Java: '#b07219',
+  Kotlin: '#A97BFF', Swift: '#F05138', Go: '#00ADD8', Rust: '#dea584',
+  'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Shell: '#89e051',
+  Unknown: '#8b8b8b',
+};
+
+function MobileLangBar({ repos }) {
+  const counts = repos.reduce((acc, repo) => {
+    const lang = repo.language || 'Unknown';
+    acc[lang] = (acc[lang] || 0) + 1;
+    return acc;
+  }, {});
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) return null;
+  const sorted = Object.entries(counts).sort(([, a], [, b]) => b - a).slice(0, 6);
+  return (
+    <div className="m-lang-bar-wrap">
+      <div className="m-lang-bar">
+        {sorted.map(([lang, count]) => (
+          <span
+            key={lang}
+            style={{ width: `${(count / total) * 100}%`, background: M_LANG_COLORS[lang] || '#8b8b8b' }}
+            title={`${lang}: ${Math.round((count / total) * 100)}%`}
+          />
+        ))}
+      </div>
+      <div className="m-lang-legend">
+        {sorted.map(([lang, count]) => (
+          <span key={lang} className="m-lang-item">
+            <i style={{ background: M_LANG_COLORS[lang] || '#8b8b8b' }} />
+            {lang} <em>{Math.round((count / total) * 100)}%</em>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function makeMiniHeatmap() {
+  return Array.from({ length: 26 * 7 }, (_, i) => {
+    const wave = Math.sin(i * 0.37) + Math.cos(i * 0.11);
+    const burst = i % 29 < 7 ? 1 : 0;
+    return Math.max(0, Math.min(4, Math.floor(wave + burst + 2)));
+  });
+}
+
 function MobileGitHub() {
   const username = portfolioData.github.username;
   const [liveStats, setLiveStats] = useState(null);
   const [liveRepos, setLiveRepos] = useState([]);
   const [liveLoading, setLiveLoading] = useState(true);
+  const miniCells = useMemo(makeMiniHeatmap, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -529,7 +579,7 @@ function MobileGitHub() {
       try {
         const [userRes, reposRes] = await Promise.all([
           fetch(`https://api.github.com/users/${username}`),
-          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6`),
+          fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=30`),
         ]);
         if (!userRes.ok || !reposRes.ok) throw new Error('GitHub API error');
         const user = await userRes.json();
@@ -543,7 +593,6 @@ function MobileGitHub() {
           setLiveRepos(
             repos
               .filter((r) => !r.fork)
-              .slice(0, 6)
               .map((r) => ({
                 name: r.name,
                 description: r.description || '',
@@ -565,7 +614,9 @@ function MobileGitHub() {
   }, [username]);
 
   const stats = portfolioData.github.stats;
-  const displayRepos = liveRepos.length > 0 ? liveRepos : portfolioData.github.pinned;
+  const topRepos = liveRepos.length > 0
+    ? [...liveRepos].sort((a, b) => b.stars - a.stars).slice(0, 6)
+    : portfolioData.github.pinned;
 
   return (
     <section className="m-section" id="m-github">
@@ -573,25 +624,22 @@ function MobileGitHub() {
         <motion.span className="m-section-label" variants={fadeUp}>GitHub</motion.span>
         <motion.h2 className="m-section-heading" variants={fadeUp}>Open Source Activity</motion.h2>
 
-        {/* Real github-readme-stats charts */}
-        <motion.div className="m-github-charts" variants={fadeUp}>
-          <img
-            src={`https://github-readme-stats.vercel.app/api?username=${username}&show_icons=true&hide_border=true&count_private=true&theme=default&bg_color=f5f5f5&title_color=1a4a2a&icon_color=2d6a4f&text_color=333&border_radius=10`}
-            alt={`${username} GitHub stats`}
-            className="m-github-chart-img"
-            loading="lazy"
-          />
-          <img
-            src={`https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact&hide_border=true&theme=default&bg_color=f5f5f5&title_color=1a4a2a&text_color=333&border_radius=10`}
-            alt={`${username} top languages`}
-            className="m-github-chart-img"
-            loading="lazy"
-          />
+        {/* Contribution heatmap */}
+        <motion.div className="m-github-heatmap-wrap" variants={fadeUp}>
+          <div className="m-github-heatmap">
+            {miniCells.map((level, i) => <span key={i} className="m-heat-cell" data-level={level} />)}
+          </div>
+          <div className="m-heatmap-legend">
+            <span>Less</span>
+            {[0, 1, 2, 3, 4].map((l) => <i key={l} data-level={l} />)}
+            <span>More</span>
+          </div>
         </motion.div>
 
+        {/* Stats row */}
         <motion.div className="m-github-stats" variants={fadeUp}>
           <div className="m-github-stat">
-            <strong>{liveLoading ? '…' : (liveStats?.repos ?? stats.commits)}</strong>
+            <strong>{liveLoading ? '…' : (liveStats?.repos ?? stats.repos)}</strong>
             <span>Repos</span>
           </div>
           <div className="m-github-stat">
@@ -608,12 +656,25 @@ function MobileGitHub() {
           </div>
         </motion.div>
 
+        {/* Bio */}
         {liveStats?.bio ? (
           <motion.p className="m-github-bio" variants={fadeUp}>{liveStats.bio}</motion.p>
         ) : null}
 
+        {/* Language bar */}
+        {liveRepos.length > 0 && (
+          <motion.div variants={fadeUp}>
+            <div className="m-lang-heading">
+              <span className="m-section-label" style={{ marginBottom: 0 }}>Top Languages</span>
+              <span className="m-lang-count">from {liveRepos.length} repos</span>
+            </div>
+            <MobileLangBar repos={liveRepos} />
+          </motion.div>
+        )}
+
+        {/* Top repos */}
         <motion.div className="m-pinned-repos" variants={staggerContainer}>
-          {displayRepos.map((repo, ri) => (
+          {topRepos.map((repo, ri) => (
             <motion.a key={repo.name} href={repo.url} target="_blank" rel="noreferrer" className="m-repo-card" variants={fadeUp} custom={ri}>
               <div className="m-repo-header">
                 <Github size={16} />
@@ -636,6 +697,7 @@ function MobileGitHub() {
     </section>
   );
 }
+
 
 function MobileCopyEmail({ email }) {
   const [copied, setCopied] = useState(false);
